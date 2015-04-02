@@ -97,15 +97,6 @@ function distanceSqPeriodic(atom1, i1, atom2, i2, num_frame, box_width)
     return x*x + y*y + z*z
 end
 
-function weylMatrix!(M, coords)
-    for i = 1:size(coords, 2)
-        for j = 1:size(coords, 2)
-            M[i, j] = dot(coords[:, i], coords[:, j])
-        end
-    end
-end
-
-
 function distanceSqPeriodic(atom1, i1, atom2, i2, box_width)
     distanceSqPeriodic(atom1, i1, atom2, i2, 1, box_width)
 end

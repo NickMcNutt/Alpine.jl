@@ -1,4 +1,4 @@
-module AtomTools
+module Alpine
 using Devectorize
 
 export
@@ -11,7 +11,6 @@ export
     unwrapCoords!,
     wrapCoord!,
     wrapCoords!,
-    weylMatrix!,
     distanceSqPeriodic,
     alignWithAxes!,
     rdf,
@@ -36,10 +35,14 @@ export
     open,
     readFrame,
     readPos,
-    newFilename
+    newFilename,
+
+    # neighborhood_similarity.jl
+    gramMatrix!
 
 include("geometry.jl")
 include("atoms.jl")
 include("files.jl")
+include("neighborhood_similarity.jl")
 
 end

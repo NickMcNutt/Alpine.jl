@@ -1,5 +1,3 @@
-TESTING
-
 # Constructs a Gram matrix and stores it in M
 function gramMatrix!(M, coords)
     for i = 1:size(coords, 2)

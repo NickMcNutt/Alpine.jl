@@ -366,7 +366,7 @@ function gram3!(clusters_rotated, clusters_joint, clusters_mimicked, ref_id)
 
         copy!(clusters_rotated[key][id].coords, D_min)
 
-        for (key2, clusters2) in clusters_mimicked
+        for (banana, clusters2) in clusters_mimicked
             gemm!('N', 'N', 1.0, R_opt, clusters2[id].coords, 0.0, clusters_rotated[key2][id].coords)
         end
     end

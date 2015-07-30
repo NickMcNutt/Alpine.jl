@@ -1,30 +1,33 @@
-import Base: open, length, start, next, done
+import Base: open, close, length, endof, first, last, start, next, done, push!
 
-type XYZFile
+type AtomFile{T}
     name::String
 end
 
-type XYZStream
+type AtomStream{T}
     ios::IOStream
     num_frames::Int64
-    frame_positions::Array{(Int64, Int64), 1}
+    frame_positions::Array{Tuple{Int64, Int64}, 1}
     num_atoms::Array{Int64, 1}
 
-    XYZStream(ios::IOStream) = new(ios, zero(Int64), Int64[], Int64[])
+    AtomStream(ios::IOStream) = new(ios, zero(Int64), Int64[], Int64[])
 end
 
-convert(::Type{XYZFile}, x::String) = XYZFile(x)
-start(s::XYZStream) = 1
-next(s::XYZStream, state::Int) = (() -> readFrame(s, state), state + 1)
-done(s::XYZStream, state::Int) = (state > s.num_frames)
-length(s::XYZStream) = s.num_frames
-getindex(s::XYZStream, i::Int) = () -> readFrame(s, i)
+#convert{T}(::Type{T:<AtomFile}, x::String) = T(x)
+start(s::AtomStream) = 1
+next(s::AtomStream, state::Int) = (getindex(s, state), state + 1)
+done(s::AtomStream, state::Int) = (state > s.num_frames)
+length(s::AtomStream) = s.num_frames
+endof(s::AtomStream) = length(s)
+first(s::AtomStream) = getindex(s, 1)
+last(s::AtomStream) = getindex(s, endof(s))
+getindex(s::AtomStream, i::Int) = (properties...) -> read(s, i, properties)
 
-function open(f::Function, xyz_file::XYZFile)
-    ios = open(xyz_file.name)
-    stream = XYZStream(ios)
+function open(f::Function, file::AtomFile{:xyz})
+    ios = open(file.name)
+    stream = AtomStream{:xyz}(ios)
     while !eof(ios)
-        num_entries::Int64 = parse(Int, readline(ios))
+        num_entries::Int64 = parse(Int64, readline(ios))
         push!(stream.num_atoms, num_entries)
         readline(ios)
         start_position::Int64 = position(ios)
@@ -36,11 +39,58 @@ function open(f::Function, xyz_file::XYZFile)
 
     stream.num_frames = length(stream.frame_positions)
 
-    f(stream)
+    result = f(stream)
     close(ios)
+    
+    return result
 end
 
-function readFrame(stream::XYZStream, frame::Int)
+close(stream::AtomStream) = close(stream.ios)
+
+function open(f::Function, file::AtomFile{:trj})
+    stream = open(file)
+    result = f(stream)
+    close(stream)
+
+    return result
+end
+
+function open(file::AtomFile{:trj})
+    ios = open(file.name)
+    stream = AtomStream{:trj}(ios)
+
+    regex_num_atoms = r"item: *number of atoms"i
+    regex_atoms = r"item: *atoms"i
+
+    while !eof(ios)
+        while !eof(ios)
+            if ismatch(regex_num_atoms, readline(ios))
+                break
+            end
+        end
+
+        num_atoms::Int64 = parse(Int64, readline(ios))
+        push!(stream.num_atoms, num_atoms)
+
+        while !eof(ios)
+            if ismatch(regex_atoms, readline(ios))
+                break
+            end
+        end
+
+        start_position::Int64 = position(ios)
+        for i = 1:num_atoms
+            readline(ios)
+        end
+        push!(stream.frame_positions, (start_position, position(ios) - start_position - 1))
+    end
+
+    stream.num_frames = length(stream.frame_positions)
+
+    return stream
+end
+        
+function read(stream::AtomStream, frame::Int, properties)
     num_atoms = stream.num_atoms[frame]
     seek(stream.ios, stream.frame_positions[frame][1])
     num_bytes = stream.frame_positions[frame][2]
@@ -51,7 +101,7 @@ function readFrame(stream::XYZStream, frame::Int)
     end
     lines = split(bytestring(bytes), "\n")
 
-    parts = split(lines[1], r" +|\t")
+    parts = split(strip(lines[1]), r" +|\t")
     num_parts = length(parts)
     num_misc_fields = num_parts - 4
     comment_present = false
@@ -65,26 +115,42 @@ function readFrame(stream::XYZStream, frame::Int)
         num_misc_fields = 0
     end
 
-    atom_types = Array(String, num_atoms)
-    atom_coords = Array(Float64, (3, num_atoms))
-    atom_misc = Array(Any, (num_misc_fields, num_atoms))
+    props_allocate = Dict{Symbol, Function}(
+        :types => () -> Array{Symbol}(num_atoms),
+        :coords => () -> Array{Float64}(3, num_atoms),
+        :misc => () -> Array{Any}(num_misc_fields, num_atoms)
+    )
+
+    props_mem = Dict{Symbol, Any}([p => f() for (p, f) in props_allocate])
 
     for i = 1:length(lines)
-        line = chomp(lines[i])
+        line = strip(chomp(lines[i]))
         parts = split(line, r" +|\t")
 
-        atom_types[i] = string(parts[1])
-        atom_coords[1:3, i] = map(x -> parse(Float64, x), parts[2:4])
-        if num_misc_fields > 0
-            if comment_present
-                atom_misc[:, i] = parts[6:(6 + num_misc_fields - 1)]
-            else
-                atom_misc[:, i] = parts[5:(5 + num_misc_fields - 1)]
+        if :num ∈ properties
+            props_mem[:num] = num_atoms
+        end
+
+        if :types ∈ properties
+            props_mem[:types][i] = symbol(string(parts[1]))
+        end
+
+        if :coords ∈ properties
+            props_mem[:coords][1:3, i] = map(x -> parse(Float64, x), parts[2:4])
+        end
+
+        if :misc ∈ properties
+            if num_misc_fields > 0
+                if comment_present
+                    props_mem[:misc][:, i] = parts[6:(6 + num_misc_fields - 1)]
+                else
+                    props_mem[:misc][:, i] = parts[5:(5 + num_misc_fields - 1)]
+                end
             end
         end
     end
 
-    return (size(atom_coords, 2), atom_types, atom_coords, atom_misc)
+    return map(k -> props_mem[k], properties)
 end
 
 function readPOSFile(filename)

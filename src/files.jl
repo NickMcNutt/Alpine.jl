@@ -1,19 +1,18 @@
-import Base: open, close, length, endof, first, last, start, next, done, push!
+import Base: open, close, length, endof, first, last, start, next, done, push!, getindex
 
 type AtomFile{T}
-    name::String
+    name::AbstractString
 end
 
 type AtomStream{T}
-    ios::IOStream
-    num_frames::Int64
-    frame_positions::Array{Tuple{Int64, Int64}, 1}
-    num_atoms::Array{Int64, 1}
+    ios::IO
+    num_frames::Int
+    frame_positions::Vector{Tuple{Int, Int}}
+    num_atoms::Vector{Int}
 
-    AtomStream(ios::IOStream) = new(ios, zero(Int64), Int64[], Int64[])
+    AtomStream(ios::IO) = new(ios, zero(Int), Int[], Int[])
 end
 
-#convert{T}(::Type{T:<AtomFile}, x::String) = T(x)
 start(s::AtomStream) = 1
 next(s::AtomStream, state::Int) = (getindex(s, state), state + 1)
 done(s::AtomStream, state::Int) = (state > s.num_frames)
@@ -64,18 +63,14 @@ function open(file::AtomFile{:trj})
 
     while !eof(ios)
         while !eof(ios)
-            if ismatch(regex_num_atoms, readline(ios))
-                break
-            end
+            ismatch(regex_num_atoms, readline(ios)) && break
         end
 
         num_atoms::Int64 = parse(Int64, readline(ios))
         push!(stream.num_atoms, num_atoms)
 
         while !eof(ios)
-            if ismatch(regex_atoms, readline(ios))
-                break
-            end
+            ismatch(regex_atoms, readline(ios)) && break
         end
 
         start_position::Int64 = position(ios)

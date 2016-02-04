@@ -1,87 +1,47 @@
 module Alpine
 
+using Distances, VantagePointTrees
+
 include("types.jl")
 
 export
-    # geometry.jl
+    # types.jl
     Indices,
-    Coords,
-    AbstractIndices,
-    AbstractCoords,
+    Clusters,
 
-    normN,
-    norm3,
-    normFrobenius,
+    # distances.jl
+    sd,
+    msd,
     rmsd,
-    kNN!,
-    kNN,
-    centerOfMass!,
-    centerOfMass,
-    rodriguesRotationMatrix,
-    rotateCoords!,
-    rotateCoordsVector!,
-    transposeCoords!,
-    unwrapCoords!,
-    wrapCoord!,
-    wrapCoords!,
-    alignWithAxes!,
-    rdf,
-    @distanceSqPeriodic,
-    distanceSqPeriodic,
-    distancePeriodic,
-    distancesSqPeriodic!,
-    distancesPeriodic!,
+    mag,
+    wrapcoords!,
+    unwrapcoords!,
+    distancesq,
+    distances!,
+
+    # geometry.jl
+    rotation,
+    randomrotation,
 
     # atoms.jl
-    getIndicesByAtomType,
-    getIndices,
-    createGroupsFromAtomTypes,
-    getGroupCoords,
-    filterGroup,
-    groupBy,
+    group,
     coalesce,
 
-    # files.jl
-    AtomFile,
-    AtomStream,
-    
-    start,
-    next,
-    done,
-    length,
-    endof,
-    first,
-    last,
-    getindex,
-    close,
-    open,
-    readFrame,
-    readPos,
-    newFilename,
+    # trj.jl
+    readtrj,
+
+    # analysis.jl
+    density,
+    rdf,
 
     # neighborhood_similarity.jl
-    Group,
-    Neighbors,
-    NeighborClusters,
+    allocate_clusters
 
-    push!,
-    nonzeroNeighbors,
-    allocate_clusters,
-    kabsch,
-    kabsch2,
-    inner_product_spectrum,
-    gram,
-    pd,
-    optimalperm,
-    gram2,
-    gram3!,
-    gramMatrix,
-    gramMatrix!,
-    d_ref
-
+include("distances.jl")
 include("geometry.jl")
 include("atoms.jl")
-include("files.jl")
+include("trj.jl")
+include("analysis.jl")
 include("neighborhood_similarity.jl")
 
 end

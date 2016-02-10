@@ -34,7 +34,6 @@ export
     allocate_clusters
 
 include("distances.jl")
-include("geometry.jl")
 include("atoms.jl")
 include("trj.jl")
 include("analysis.jl")

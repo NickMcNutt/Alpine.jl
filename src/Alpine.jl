@@ -19,10 +19,6 @@ export
     distancesq,
     distances!,
 
-    # geometry.jl
-    rotation,
-    randomrotation,
-
     # atoms.jl
     group,
     coalesce,

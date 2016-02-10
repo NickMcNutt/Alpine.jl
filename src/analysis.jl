@@ -95,23 +95,3 @@ function density2{T<:AbstractFloat}(file_out::IO, C::AbstractMatrix{T}, n::Int, 
     println(file_out, "\n0" ^ remaining_zeros)
 end
 
-function rdf{T<:AbstractFloat}(bw::T, C::AbstractMatrix{T}, max_radius::T, dr::T)
-    num_atoms::Int = size(C, 2)
-    num_bins::Int = floor(Int, max_radius / dr)
-    int_bins = zeros(UInt64, num_bins)
-    bins = Matrix{Float64}(num_bins, 2)
-
-    @inbounds for i in 2:num_atoms, j in 1:i-1
-        r = sqrt(distancesq(bw, C, i, j))
-        r < max_radius && (int_bins[fld(r, dr) + 1] += 1)
-    end
-
-    @inbounds for i in 1:num_bins
-        r_mid = i*dr - dr / 2
-        divisor = (num_atoms * 4π * r_mid * r_mid * dr) * (num_atoms / bw ^ 3)
-        bins[i, 1] = r_mid
-        bins[i, 2] = 2 * int_bins[i] / divisor
-    end
-    
-    return bins
-end

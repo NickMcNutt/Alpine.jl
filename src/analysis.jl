@@ -38,15 +38,25 @@ function density{T<:AbstractFloat}(file_out::IO, C::AbstractMatrix{T}, n::Int, b
     println(file_out, "\n0" ^ remaining_zeros)
 end
 
-function rdf{T<:AbstractFloat}(bw::T, C::AbstractMatrix{T}, max_radius::T, dr::T)
+function get_atoms{N}(frame::Int, types::NTuple{N, Symbol}, atom_types::Vector{Symbol}, num_atoms::Int)
+    indices = 1 + (frame - 1) * num_atoms : frame * num_atoms
+    findin(sub(atom_types, indices), types) .+ (first(indices) - 1)
+end
+
+function rdf{T}(bw::T, C::Matrix{T}, max_radius::T, dr::T)
     num_atoms::Int = size(C, 2)
     num_bins::Int = floor(Int, max_radius / dr)
     int_bins = zeros(UInt64, num_bins)
     bins = Matrix{Float64}(num_bins, 2)
 
-    @inbounds for i in 2:num_atoms, j in 1:i-1
-        r = sqrt(distancesq(bw, C, i, j))
-        r < max_radius && (int_bins[fld(r, dr) + 1] += 1)
+    @inbounds for i in 2:num_atoms
+        for j in 1:i-1
+            r::T = sqrt(distancesq(bw, C, i, j))
+            if r < max_radius
+                p::Int = ceil(Int, r / dr) - 1
+                int_bins[p] += 1
+            end
+        end
     end
 
     @inbounds for i in 1:num_bins
@@ -57,6 +67,17 @@ function rdf{T<:AbstractFloat}(bw::T, C::AbstractMatrix{T}, max_radius::T, dr::T
     end
     
     return bins
+end
+
+function rdf{N, T}(frames::AbstractArray{Int}, types::NTuple{N, Symbol}, box_width::T, max_radius::T, dr::T, num_atoms::Int, atom_coords::AbstractMatrix{T}, atom_types::Vector{Symbol})
+    list = map(frames) do f
+        indices = get_atoms(f, types, atom_types, num_atoms)
+        coords = atom_coords[:, indices]
+        
+        (box_width, coords, max_radius, dr)
+    end
+    
+    mean(pmap(x -> rdf(x...), list))
 end
 
 function density2{T<:AbstractFloat}(file_out::IO, C::AbstractMatrix{T}, n::Int, bw::T = zero(Float64))

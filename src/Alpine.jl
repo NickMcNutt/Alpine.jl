@@ -28,6 +28,7 @@ export
 
     # analysis.jl
     density,
+    get_atoms,
     rdf,
 
     # neighborhood_similarity.jl

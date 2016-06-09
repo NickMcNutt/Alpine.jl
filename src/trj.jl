@@ -20,15 +20,24 @@ function readtrj(filename::AbstractString)
 
     seekstart(ios)
 
+    box = Vector{Tuple{Float64, Float64, Float64}}(num_frames)
     atom_types = Vector{Symbol}(total_atoms)
     atom_coords = Matrix{Float64}(3, total_atoms)
     atom_charges = Vector{Float64}(total_atoms)
     atom_energies = Vector{Float64}(total_atoms)
     
     @inbounds for f in 1:num_frames
-        for i in 1:9
+        for i in 1:5
             readline(ios)
         end
+
+        xlo, xhi = map(x -> parse(Float64, x), split(readline(ios))[1:2])
+        ylo, yhi = map(x -> parse(Float64, x), split(readline(ios))[1:2])
+        zlo, zhi = map(x -> parse(Float64, x), split(readline(ios))[1:2])
+
+        box[f] = (xhi - xlo, yhi - ylo, zhi - zlo)
+
+        readline(ios)
 
         @inbounds for i in 1:num_atoms
             j = (f-1) * num_atoms + i
@@ -47,5 +56,5 @@ function readtrj(filename::AbstractString)
 
     close(ios)
 
-    return num_frames, num_atoms, atom_types, atom_coords, atom_charges, atom_energies
+    return num_frames, num_atoms, box, atom_types, atom_coords, atom_charges, atom_energies
 end

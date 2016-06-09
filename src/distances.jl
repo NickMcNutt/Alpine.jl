@@ -71,9 +71,25 @@ function distancesq{T<:AbstractFloat}(bw::T, x1::T, y1::T, z1::T, x2::T, y2::T, 
     return xd*xd + yd*yd + zd*zd
 end
 
+function distancesq{T<:AbstractFloat}(xbw::T, ybw::T, zbw::T, x1::T, y1::T, z1::T, x2::T, y2::T, z2::T)
+    xhbw = xbw / 2
+    yhbw = ybw / 2
+    zhbw = zbw / 2
+    xd = x1 - x2
+    yd = y1 - y2
+    zd = z1 - z2
+    if xd < -xhbw xd += xbw elseif xd > xhbw xd -= xbw end
+    if yd < -yhbw yd += ybw elseif yd > yhbw yd -= ybw end
+    if zd < -zhbw zd += zbw elseif zd > zhbw zd -= zbw end
+
+    return xd*xd + yd*yd + zd*zd
+end
+
 distancesq{T<:AbstractFloat}(bw::T, C::AbstractMatrix{T}, i::Int, j::Int) = distancesq(bw, C[1, i], C[2, i], C[3, i], C[1, j], C[2, j], C[3, j])
 distancesq{T<:AbstractFloat}(bw::T, C::AbstractMatrix{T}, i::Int, x::T, y::T, z::T) = distancesq(bw, C[1, i], C[2, i], C[3, i], x, y, z)
 distancesq{T<:AbstractFloat}(bw::T, C1::AbstractMatrix{T}, C2::AbstractMatrix{T}, i1::Int, i2::Int) = distancesq(bw, C1[1, i1], C1[2, i1], C1[3, i1], C2[1, i2], C2[2, i2], C2[3, i2])
+
+distancesq{T<:AbstractFloat}(xbw::T, ybw::T, zbw::T, C::AbstractMatrix{T}, i::Int, j::Int) = distancesq(xbw, ybw, zbw, C[1, i], C[2, i], C[3, i], C[1, j], C[2, j], C[3, j])
 
 # Compute the distances between a set of coords and a particular coord
 function distances!{T<:AbstractFloat}(bw::T, D::AbstractVector{T}, C::AbstractMatrix{T}, x::T, y::T, z::T)

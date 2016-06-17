@@ -40,6 +40,7 @@ include("distances.jl")
 include("atoms.jl")
 include("trj.jl")
 include("analysis.jl")
+include("rdf.jl")
 include("neighborhood_similarity.jl")
 
 end

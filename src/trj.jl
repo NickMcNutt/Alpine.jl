@@ -42,7 +42,7 @@ function readtrj(filename::AbstractString)
         @inbounds for i in 1:num_atoms
             j = (f-1) * num_atoms + i
             s = split(readline(ios), ' ', limit = 12, keep = false)
-            atom_types[j] = symbol(s[1])
+            atom_types[j] = Symbol(s[1])
             atom_coords[1, j] = parse(Float64, s[2])
             atom_coords[2, j] = parse(Float64, s[3])
             atom_coords[3, j] = parse(Float64, s[4])
@@ -52,6 +52,7 @@ function readtrj(filename::AbstractString)
 
         print('\r')
         print("$f/$num_frames")
+        flush(STDOUT)
     end
 
     close(ios)

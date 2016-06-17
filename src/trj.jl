@@ -57,5 +57,11 @@ function readtrj(filename::AbstractString)
 
     close(ios)
 
-    return num_frames, num_atoms, box, atom_types, atom_coords, atom_charges, atom_energies
+    return Dict(:num_frames => num_frames,
+                :num_atoms => num_atoms,
+                :box => box,
+                :types => atom_types,
+                :coords => atom_coords,
+                :charges => atom_charges,
+                :energies => atom_energies)
 end

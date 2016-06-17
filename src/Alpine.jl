@@ -1,6 +1,6 @@
 module Alpine
 
-using Distances, VantagePointTrees
+using Distances, VPTrees
 
 include("types.jl")
 

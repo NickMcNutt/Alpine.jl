@@ -1,9 +1,9 @@
-using VantagePointTrees
+using VPTrees
 
 import Base.LinAlg.BLAS: gemm!
-import VantagePointTrees: initneighbors!, updateneighbors!, knn!, sumsqrtgt, Metric
+import VPTrees: initneighbors!, updateneighbors!, knn!, sumsqrtgt
 
-function initneighbors!(clusters::Clusters, index::Int)
+#==function initneighbors!(clusters::Clusters, index::Int)
     @inbounds begin
         nd = clusters.dist
         k = clusters.num_neighbors
@@ -106,4 +106,4 @@ function knn!(clusters::Clusters, index::Int, tree::VPTree, p::Int)
     knn!(clusters, index, Inf, tree.metric, tree.points, tree.root, p)
     @inbounds distances!(tree.metric.bw, clusters.coords, index, tree.points, clusters.indices_neighbors, p)
 end
-
+==#

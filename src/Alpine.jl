@@ -31,6 +31,7 @@ export
     get_atoms,
 
     # rdf.jl
+    rdf_slow,
     rdf,
 
     # neighborhood_similarity.jl

@@ -343,6 +343,7 @@ function read_atomfile{T}(filename::AbstractString, frames::Vector{Frame{T}})
     for (i, frame) in enumerate(frames)
         j = mod1(i, num_chunks)
         seek(ios, frame.atom_data_start - 1)
+        chunks[j].i = 1
         readbytes!(ios, chunks[j].data, frame_sizes[i], all = false)
         readframeatoms(chunks[j], atom_data, i)
     end

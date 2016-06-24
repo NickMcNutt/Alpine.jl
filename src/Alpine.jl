@@ -43,16 +43,12 @@ export
 
     # rdf.jl
     rdf_slow,
-    rdf,
-
-    # neighborhood_similarity.jl
-    allocate_clusters
+    rdf
 
 include("distances.jl")
 include("atoms.jl")
 include("files.jl")
 include("analysis.jl")
 include("rdf.jl")
-include("neighborhood_similarity.jl")
 
 end

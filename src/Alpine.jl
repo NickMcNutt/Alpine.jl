@@ -23,8 +23,19 @@ export
     group,
     coalesce,
 
-    # trj.jl
-    readtrj,
+    # files.jl
+    Frame,
+    AtomData,
+    read_atomfile,
+    read_atomfile_structure,
+    get_atom_indices,
+    types,
+    coords,
+    charges,
+    energies,
+    num_atoms,
+    timestep,
+    box_dims,
 
     # analysis.jl
     density,
@@ -39,7 +50,7 @@ export
 
 include("distances.jl")
 include("atoms.jl")
-include("trj.jl")
+include("files.jl")
 include("analysis.jl")
 include("rdf.jl")
 include("neighborhood_similarity.jl")

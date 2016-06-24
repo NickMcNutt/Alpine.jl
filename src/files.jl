@@ -1,176 +1,371 @@
-import Base: open, close, length, endof, first, last, start, next, done, push!, getindex
+import Base: show, display, getindex
 
-type AtomFile{T}
-    name::AbstractString
+###########################
+#    Types
+###########################
+
+type Chunk
+    data::Vector{UInt8}
+    i::Int64
+    
+    Chunk(num_bytes::Int64) = new(Vector{UInt8}(num_bytes), 1)
+    Chunk(data::Vector{UInt8}) = new(data, 1)
 end
 
-type AtomStream{T}
-    ios::IO
-    num_frames::Int
-    frame_positions::Vector{Tuple{Int, Int}}
-    num_atoms::Vector{Int}
-
-    AtomStream(ios::IO) = new(ios, zero(Int), Int[], Int[])
+immutable Frame{T}
+    num_atoms::Int
+    timestep::Int
+    box_dims::Tuple{T, T, T}
+    frame_start::Int64
+    frame_end::Int64
+    atom_data_start::Int64
 end
 
-start(s::AtomStream) = 1
-next(s::AtomStream, state::Int) = (getindex(s, state), state + 1)
-done(s::AtomStream, state::Int) = (state > s.num_frames)
-length(s::AtomStream) = s.num_frames
-endof(s::AtomStream) = length(s)
-first(s::AtomStream) = getindex(s, 1)
-last(s::AtomStream) = getindex(s, endof(s))
-getindex(s::AtomStream, i::Int) = (properties...) -> read(s, i, properties)
+immutable AtomData{T}
+    frames::Vector{Frame{T}}
+    indices::Vector{Int64}
+    types::Vector{Symbol}
+    coords::Matrix{T}
+    charges::Vector{T}
+    energies::Vector{T}
 
-function open(f::Function, file::AtomFile{:xyz})
-    ios = open(file.name)
-    stream = AtomStream{:xyz}(ios)
-    while !eof(ios)
-        num_entries::Int64 = parse(Int64, readline(ios))
-        push!(stream.num_atoms, num_entries)
-        readline(ios)
-        start_position::Int64 = position(ios)
-        for i = 1:num_entries
-            readline(ios)
-        end
-        push!(stream.frame_positions, (start_position, position(ios) - start_position - 1))
+    function AtomData(frames::Vector{Frame{T}}, indices::Vector{Int64}, total_atoms::Int64)
+        new(frames, indices, Vector{Symbol}(total_atoms), Matrix{T}(3, total_atoms), Vector{T}(total_atoms), Vector{T}(total_atoms))
+    end
+end
+
+function AtomData{T}(frames::Vector{Frame{T}}, indices::Vector{Int64}, total_atoms::Int64)
+    AtomData{T}(frames, indices, total_atoms)
+end
+
+###########################
+#    Display functions
+###########################
+
+show(io::IO, frame::Frame) = @printf(io, "t = %d  %d atoms  box = %f %f %f", frame.timestep, frame.num_atoms, frame.box_dims[1], frame.box_dims[2], frame.box_dims[3])
+display(frame::Frame) = show(frame)
+
+function show(io::IO, ad::AtomData)
+    println(io, "$(length(ad.frames)) frames with atom types $(tuple(unique(ad.types)...))\n")
+    for frame in ad.frames
+        show(io, frame)
+        println(io)
+    end
+end
+
+display(ad::AtomData) = show(ad)
+
+###########################
+#    Atom data functions
+###########################
+
+function get_atom_indices{T}(ad::AtomData{T}, frame_indices::AbstractVector{Int})
+    num_frames = length(frame_indices)
+    atom_indices = Vector{UnitRange{Int}}(num_frames)
+    for (i, f) in enumerate(frame_indices)
+        start_index = ad.indices[f]
+        end_index = start_index + ad.frames[f].num_atoms - 1
+        atom_indices[i] = start_index:end_index
     end
 
-    stream.num_frames = length(stream.frame_positions)
+    return atom_indices
+end
 
-    result = f(stream)
+function get_atom_indices{T}(ad::AtomData{T}, frame_index::Int)
+    start_index = ad.indices[frame_index]
+    end_index = start_index + ad.frames[frame_index].num_atoms - 1
+    start_index:end_index
+end
+
+function coords(ad::AtomData, frame_indices::AbstractVector{Int})
+    atom_indices = get_atom_indices(ad, frame_indices)
+    ad.coords[:, vcat(atom_indices...)]
+end
+
+coords(ad::AtomData, frame_index::Int) = ad.coords[:, get_atom_indices(ad, frame_index)]
+coords(ad::AtomData) = length(ad.frames) == 1 ? coords(ad, 1) : coords(ad, 1:length(ad.frames))
+
+function types(ad::AtomData, frame_indices::AbstractVector{Int})
+    atom_indices = get_atom_indices(ad, frame_indices)
+    ad.types[vcat(atom_indices...)]
+end
+
+types(ad::AtomData, frame_index::Int) = ad.types[get_atom_indices(ad, frame_index)]
+types(ad::AtomData) = length(ad.frames) == 1 ? types(ad, 1) : types(ad, 1:length(ad.frames))
+
+function charges(ad::AtomData, frame_indices::AbstractVector{Int})
+    atom_indices = get_atom_indices(ad, frame_indices)
+    ad.charges[vcat(atom_indices...)]
+end
+
+charges(ad::AtomData, frame_index::Int) = ad.charges[get_atom_indices(ad, frame_index)]
+charges(ad::AtomData) = length(ad.frames) == 1 ? charges(ad, 1) : charges(ad, 1:length(ad.frames))
+
+function energies(ad::AtomData, frame_indices::AbstractVector{Int})
+    atom_indices = get_atom_indices(ad, frame_indices)
+    ad.energies[vcat(atom_indices...)]
+end
+
+energies(ad::AtomData, frame_index::Int) = ad.energies[get_atom_indices(ad, frame_index)]
+energies(ad::AtomData) = length(ad.frames) == 1 ? energies(ad, 1) : energies(ad, 1:length(ad.frames))
+
+num_atoms(ad::AtomData, frame_indices::AbstractVector{Int}) = [frame.num_atoms for frame in ad.frames[frame_indices]]
+num_atoms(ad::AtomData, frame_index::Int) = ad.frames[frame_index].num_atoms
+num_atoms(ad::AtomData) = length(ad.frames) == 1 ? num_atoms(ad, 1) : num_atoms(ad, 1:length(ad.frames))
+
+timestep(ad::AtomData, frame_indices::AbstractVector{Int}) = [frame.timestep for frame in ad.frames[frame_indices]]
+timestep(ad::AtomData, frame_index::Int) = ad.frames[frame_index].timestep
+timestep(ad::AtomData) = length(ad.frames) == 1 ? timestep(ad, 1) : timestep(ad, 1:length(ad.frames))
+
+box_dims(ad::AtomData, frame_indices::AbstractVector{Int}) = [frame.box_dims for frame in ad.frames[frame_indices]]
+box_dims(ad::AtomData, frame_index::Int) = ad.frames[frame_index].box_dims
+box_dims(ad::AtomData) = length(ad.frames) == 1 ? box_dims(ad, 1) : box_dims(ad, 1:length(ad.frames))
+
+################################
+#    File reading functions
+################################
+
+function readbyte(chunk::Chunk)
+    b = chunk.data[chunk.i]
+    chunk.i += 1
+    return b
+end
+
+previewbyte(chunk::Chunk) = chunk.data[chunk.i]
+
+nextbyte(chunk::Chunk) = chunk.i += 1
+
+readnewline(chunk::Chunk) = while readbyte(chunk) != 0x0a end
+
+function readnewlines(chunk::Chunk, num_newlines::Int)
+    s = 0
+    while s < num_newlines
+        if readbyte(chunk) == 0x0a
+            s += 1
+        end
+    end
+end
+
+function readfloat{T}(::Type{T}, chunk::Chunk)
+    a = T(0)
+    b = T(0)
+    p = 1
+    
+    c = previewbyte(chunk)
+    if c == 0x2d
+        p = -1
+        nextbyte(chunk)
+    end
+    
+    while true
+        c = previewbyte(chunk)
+        (c < 0x30 || c > 0x39) && break
+        nextbyte(chunk)
+        a = 10a + (c - 0x30)
+    end
+    
+    c != 0x2e && return p*a
+    nextbyte(chunk)
+    
+    i = 1
+    while true
+        c = previewbyte(chunk)
+        (c < 0x30 || c > 0x39) && break
+        nextbyte(chunk)
+        a = 10a + (c - 0x30)
+        i *= 10
+    end
+    
+    c != 0x45 && c != 0x65 && return (p*a/i)
+    nextbyte(chunk)
+    
+    b = readint(chunk)
+    return (p*a/i) * T(10)^b
+end
+
+function readint(chunk::Chunk)
+    n = 0
+    p = 1
+    
+    c = previewbyte(chunk)
+    if c == 0x2d
+        p = -1
+        nextbyte(chunk)
+    end
+    
+    while true
+        c = previewbyte(chunk)
+        (c < 0x30 || c > 0x39) && break
+        nextbyte(chunk)
+        n = 10n + (c - 0x30)
+    end
+    
+    return p*n
+end
+
+function readsymbol(chunk::Chunk, atom_types::Matrix{UInt8}, i::Int)
+    n = size(atom_types, 1)
+
+    j = 1
+    while j <= n
+        c = previewbyte(chunk)
+        (c == 0x20 || c == 0x09) && break
+        atom_types[j, i] = c
+        nextbyte(chunk)
+        j += 1
+    end
+
+    while j <= n
+        atom_types[j, i] = 0x20
+        j += 1
+    end
+end
+
+function readsymbol(chunk::Chunk)
+    i1 = chunk.i
+    while true
+        c = previewbyte(chunk)
+        if (c == 0x20 || c == 0x09)
+            return ccall(:jl_symbol_n, Ref{Symbol}, (Ptr{UInt8}, Int32), pointer(chunk.data, i1), Int32(chunk.i - i1))
+        end
+        nextbyte(chunk)
+    end
+end
+
+function readnonblank(chunk::Chunk)
+    while true
+        c = previewbyte(chunk)
+        (c == 0x20 || c == 0x09 || c == 0x0a) && return
+        nextbyte(chunk)
+    end
+end
+
+function readblank(chunk::Chunk)
+    while true
+        c = previewbyte(chunk)
+        c != 0x20 && c != 0x09 && return
+        nextbyte(chunk)
+    end
+end
+
+function readframeheader{T}(chunk::Chunk, ::Type{T})
+    frame_start = chunk.i
+    
+    readnewline(chunk)
+    
+    timestep = readint(chunk)
+    readnewlines(chunk, 2)
+    
+    num_atoms = readint(chunk)
+    readnewlines(chunk, 2)
+    
+    xl = readfloat(T, chunk)
+    readblank(chunk)
+    xh = readfloat(T, chunk)
+    readnewline(chunk)
+    
+    yl = readfloat(T, chunk)
+    readblank(chunk)
+    yh = readfloat(T, chunk)
+    readnewline(chunk)
+    
+    zl = readfloat(T, chunk)
+    readblank(chunk)
+    zh = readfloat(T, chunk)
+    readnewlines(chunk, 2)
+
+    atom_data_start = chunk.i
+    readnewlines(chunk, num_atoms)
+    frame_end = chunk.i - 1
+    
+    Frame(num_atoms, timestep, (xh - xl, yh - yl, zh - zl), frame_start, frame_end, atom_data_start)
+end
+
+function readlineatoms{T}(chunk::Chunk, atom_data::AtomData{T}, i::Int)
+    atom_type = readsymbol(chunk)
+    readnonblank(chunk)
+    readblank(chunk)
+    
+    x = readfloat(T, chunk)
+    readblank(chunk)
+    
+    y = readfloat(T, chunk)
+    readblank(chunk)
+    
+    z = readfloat(T, chunk)
+    readblank(chunk)
+    
+    charge = readfloat(T, chunk)
+    readblank(chunk)
+    
+    energy = readfloat(T, chunk)
+    readnewline(chunk)
+    
+    atom_data.types[i] = atom_type
+    atom_data.coords[1, i] = x
+    atom_data.coords[2, i] = y
+    atom_data.coords[3, i] = z
+    atom_data.charges[i] = charge
+    atom_data.energies[i] = energy
+end
+
+function readframeatoms{T}(chunk::Chunk, atom_data::AtomData{T}, frame_index::Int)
+    start_index = atom_data.indices[frame_index]
+    end_index = start_index + atom_data.frames[frame_index].num_atoms - 1
+    for i in start_index:end_index
+        readlineatoms(chunk, atom_data, i)
+    end
+end
+
+function read_atomfile{T}(filename::AbstractString, frames::Vector{Frame{T}})
+    max_buffer_size = 1*1024*1024*1024
+
+    num_frames = length(frames)
+    frame_sizes = [frame.frame_end - frame.atom_data_start + 1 for frame in frames]
+    max_frame_size = maximum(frame_sizes)
+    
+    max_buffer_size < max_frame_size && error("Enlarge buffer size.")
+
+    num_chunks = floor(Int, max_buffer_size / max_frame_size)
+    num_chunks = min(num_chunks, num_frames)
+
+    chunk_size = max_frame_size
+    chunks = [Chunk(chunk_size) for _ in 1:num_chunks]
+
+    indices = cumsum(map(f -> Int64(f.num_atoms), frames))
+    total_atoms = indices[end]
+    indices .-= indices[1] - 1
+
+    atom_data = AtomData(frames, indices, total_atoms)
+
+    ios = open(filename, "r")
+
+    for (i, frame) in enumerate(frames)
+        j = mod1(i, num_chunks)
+        seek(ios, frame.atom_data_start - 1)
+        readbytes!(ios, chunks[j].data, frame_sizes[i], all = false)
+        readframeatoms(chunks[j], atom_data, i)
+    end
+
+    close(ios)
+
+    return atom_data
+end
+
+function read_atomfile_structure(filename::AbstractString)
+    file_size = stat(filename).size
+    chunk = Chunk(file_size)
+
+    frames = Vector{Frame{Float64}}()
+
+    ios = open(filename, "r")
+    readbytes!(ios, chunk.data, file_size, all = false)
     close(ios)
     
-    return result
-end
-
-close(stream::AtomStream) = close(stream.ios)
-
-function open(f::Function, file::AtomFile{:trj})
-    stream = open(file)
-    result = f(stream)
-    close(stream)
-
-    return result
-end
-
-function open(file::AtomFile{:trj})
-    ios = open(file.name)
-    stream = AtomStream{:trj}(ios)
-
-    regex_num_atoms = r"item: *number of atoms"i
-    regex_atoms = r"item: *atoms"i
-
-    while !eof(ios)
-        while !eof(ios)
-            ismatch(regex_num_atoms, readline(ios)) && break
-        end
-
-        num_atoms::Int64 = parse(Int64, readline(ios))
-        push!(stream.num_atoms, num_atoms)
-
-        while !eof(ios)
-            ismatch(regex_atoms, readline(ios)) && break
-        end
-
-        start_position::Int64 = position(ios)
-        for i = 1:num_atoms
-            readline(ios)
-        end
-        push!(stream.frame_positions, (start_position, position(ios) - start_position - 1))
+    while chunk.i < file_size
+        frame = readframeheader(chunk, Float64)
+        push!(frames, frame)
     end
 
-    stream.num_frames = length(stream.frame_positions)
-
-    return stream
+    return frames
 end
-        
-function read(stream::AtomStream, frame::Int, properties)
-    num_atoms = stream.num_atoms[frame]
-    seek(stream.ios, stream.frame_positions[frame][1])
-    num_bytes = stream.frame_positions[frame][2]
-    bytes = Vector{Uint8}(num_bytes)
-    bytes_read = readbytes!(stream.ios, bytes, num_bytes)
-    if num_bytes != bytes_read
-        error("num_bytes != bytes_read")
-    end
-    lines = split(bytestring(bytes), "\n")
-
-    parts = split(strip(lines[1]), r" +|\t")
-    num_parts = length(parts)
-    num_misc_fields = num_parts - 4
-    comment_present = false
-
-    if (num_parts > 4) && (parts[5] == "#")
-        num_misc_fields -= 1
-        comment_present = true
-    end
-
-    if num_misc_fields < 0
-        num_misc_fields = 0
-    end
-
-    props_allocate = Dict{Symbol, Function}(
-        :types => () -> Array{Symbol}(num_atoms),
-        :coords => () -> Array{Float64}(3, num_atoms),
-        :misc => () -> Array{Any}(num_misc_fields, num_atoms)
-    )
-
-    props_mem = Dict{Symbol, Any}([p => f() for (p, f) in props_allocate])
-
-    for i = 1:length(lines)
-        line = strip(chomp(lines[i]))
-        parts = split(line, r" +|\t")
-
-        if :num ∈ properties
-            props_mem[:num] = num_atoms
-        end
-
-        if :types ∈ properties
-            props_mem[:types][i] = symbol(string(parts[1]))
-        end
-
-        if :coords ∈ properties
-            props_mem[:coords][1:3, i] = map(x -> parse(Float64, x), parts[2:4])
-        end
-
-        if :misc ∈ properties
-            if num_misc_fields > 0
-                if comment_present
-                    props_mem[:misc][:, i] = parts[6:(6 + num_misc_fields - 1)]
-                else
-                    props_mem[:misc][:, i] = parts[5:(5 + num_misc_fields - 1)]
-                end
-            end
-        end
-    end
-
-    return map(k -> props_mem[k], properties)
-end
-
-function readPOSFile(filename)
-    # Obtain number of data entries.  4 bytes per Float32 and 4 numerical values per entry
-    num_entries::Int = filesize(filename_input) / 4 / 4
-
-    # Read file into a (num_entries x 4) matrix
-    file_input = open(filename_input, "r")
-    data = read(file_input, Float32, (4, num_entries))'
-    close(file_input)
-
-    # POS data is in big-endian format.  Who's idea was this?  Convert to little-endian.
-    map!((x) -> ntoh(x), data)
-
-    atom_coords = data[:, 1:3]
-    atom_misc = data[:, 4]
-
-    return (num_entries, atom_coords, atom_misc)
-end
-
-function readPOSFile(filename, atom_types)
-    readPOSFile(filename)
-    # finish this
-end
-
-
-newFilename(filename, new_extension) = match(r"(.*[.])", filename).captures[1] * new_extension
-

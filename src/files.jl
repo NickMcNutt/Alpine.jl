@@ -274,6 +274,7 @@ function read_atomfile{T}(filename::AbstractString, frames::Vector{Frame{T}})
     for (i, frame) in enumerate(frames)
         j = mod1(i, num_chunks)
         seek(ios, frame.atom_data_start - 1)
+        chunks[j].i = 1
         read_bytes!(ios, chunks[j].data, frame_sizes[i], all = false)
         read_frame(chunks[j], atom_data, i)
     end
@@ -283,6 +284,39 @@ function read_atomfile{T}(filename::AbstractString, frames::Vector{Frame{T}})
     return atom_data
 end
 
+function readframeheader{T}(chunk::Chunk, ::Type{T})
+    frame_start = chunk.i
+    
+    readnewline(chunk)
+    
+    timestep = readint(chunk)
+    readnewlines(chunk, 2)
+    
+    num_atoms = readint(chunk)
+    readnewlines(chunk, 2)
+    
+    xl = readfloat(T, chunk)
+    readblank(chunk)
+    xh = readfloat(T, chunk)
+    readnewline(chunk)
+    
+    yl = readfloat(T, chunk)
+    readblank(chunk)
+    yh = readfloat(T, chunk)
+    readnewline(chunk)
+    
+    zl = readfloat(T, chunk)
+    readblank(chunk)
+    zh = readfloat(T, chunk)
+    readnewlines(chunk, 2)
+
+    atom_data_start = chunk.i
+    readnewlines(chunk, num_atoms)
+    frame_end = chunk.i - 1
+    
+    Frame(num_atoms, timestep, (xh - xl, yh - yl, zh - zl), frame_start, frame_end, atom_data_start)
+end
+
 function read_atomfile_structure(filename::AbstractString)
     file_size = stat(filename).size
     chunk = Chunk(file_size)
@@ -290,7 +324,7 @@ function read_atomfile_structure(filename::AbstractString)
     frames = Vector{Frame{Float64}}()
 
     ios = open(filename, "r")
-    read_bytes!(ios, chunk.data, file_size, all = false)
+    read_bytes!(ios, chunk.data, file_size, all = true)
     close(ios)
     
     while chunk.i < file_size

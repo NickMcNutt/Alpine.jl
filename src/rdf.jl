@@ -1,42 +1,5 @@
 using VPTrees
 
-function rdf{N, T}(frames::AbstractArray{Int}, types::NTuple{N, Symbol}, box_width::T, max_radius::T, Δr::T, num_atoms::Int, atom_coords::AbstractMatrix{T}, atom_types::Vector{Symbol})
-    list = map(frames) do f
-        indices = get_atoms(f, types, atom_types, num_atoms)
-        coords = atom_coords[:, indices]
-        
-        (box_width, coords, max_radius, Δr)
-    end
-    
-    mean(pmap(x -> rdf(x...), list))
-end
-
-function rdf_slow{T}(xbw::T, ybw::T, zbw::T, C::Matrix{T}, max_radius::T, Δr::T)
-    num_atoms::Int = size(C, 2)
-    num_bins::Int = floor(Int, max_radius / Δr)
-    int_bins = zeros(UInt64, num_bins)
-    bins = Matrix{Float64}(num_bins, 2)
-
-    @inbounds for i in 2:num_atoms
-        for j in 1:i-1
-            r::T = sqrt(distancesq(xbw, ybw, zbw, C, i, j))
-            if r < max_radius
-                p::Int = floor(Int, r / Δr) + 1
-                int_bins[p] += 1
-            end
-        end
-    end
-
-    @inbounds for i in 1:num_bins
-        r_mid = i*Δr - Δr / 2
-        divisor = (num_atoms * 4π * r_mid * r_mid * Δr) * (num_atoms / (xbw * ybw * zbw))
-        bins[i, 1] = r_mid
-        bins[i, 2] = 2 * int_bins[i] / divisor
-    end
-    
-    return bins
-end
-
 function ndf{T}(metric::Function, point_indices::Vector{Int}, radius::T, Δr::T)
     num_points::Int = length(point_indices)
     num_bins::Int = ceil(Int, radius / Δr)
@@ -94,6 +57,18 @@ function rdf{T}(xbw::T, ybw::T, zbw::T, coords::Matrix{T}, radius::T, Δr::T)
     return bins
 end
 
+function rdf{N, T}(atoms::AtomData{T}, element_types::NTuple{N, Symbol}, max_radius::T, Δr::T)
+    num_frames = length(atoms.frames)
+    list = map(1:num_frames) do i
+        indices = get_atoms(atoms, i, element_types)
+        c = coords(atoms, i)[:, indices]
+
+        (box_dims(atoms, i)..., c, max_radius, Δr)
+    end
+
+    mean(pmap(x -> rdf(x...), list))
+end
+
 function rdf{N, T}(frames::AbstractArray{Int}, types::NTuple{N, Symbol}, bw::Vector{Tuple{T, T, T}}, max_radius::T, Δr::T, num_atoms::Int, atom_coords::AbstractMatrix{T}, atom_types::Vector{Symbol})
     list = map(frames) do f
         indices = get_atoms(f, types, atom_types, num_atoms)
@@ -103,4 +78,41 @@ function rdf{N, T}(frames::AbstractArray{Int}, types::NTuple{N, Symbol}, bw::Vec
     end
     
     mean(pmap(x -> rdf(x...), list))
+end
+
+function rdf{N, T}(frames::AbstractArray{Int}, types::NTuple{N, Symbol}, box_width::T, max_radius::T, Δr::T, num_atoms::Int, atom_coords::AbstractMatrix{T}, atom_types::Vector{Symbol})
+    list = map(frames) do f
+        indices = get_atoms(f, types, atom_types, num_atoms)
+        coords = atom_coords[:, indices]
+        
+        (box_width, coords, max_radius, Δr)
+    end
+    
+    mean(pmap(x -> rdf(x...), list))
+end
+
+function rdf_slow{T}(xbw::T, ybw::T, zbw::T, C::Matrix{T}, max_radius::T, Δr::T)
+    num_atoms::Int = size(C, 2)
+    num_bins::Int = floor(Int, max_radius / Δr)
+    int_bins = zeros(UInt64, num_bins)
+    bins = Matrix{Float64}(num_bins, 2)
+
+    @inbounds for i in 2:num_atoms
+        for j in 1:i-1
+            r::T = sqrt(distancesq(xbw, ybw, zbw, C, i, j))
+            if r < max_radius
+                p::Int = floor(Int, r / Δr) + 1
+                int_bins[p] += 1
+            end
+        end
+    end
+
+    @inbounds for i in 1:num_bins
+        r_mid = i*Δr - Δr / 2
+        divisor = (num_atoms * 4π * r_mid * r_mid * Δr) * (num_atoms / (xbw * ybw * zbw))
+        bins[i, 1] = r_mid
+        bins[i, 2] = 2 * int_bins[i] / divisor
+    end
+    
+    return bins
 end

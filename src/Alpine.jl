@@ -26,8 +26,6 @@ export
     # files.jl
     Frame,
     AtomData,
-    read_atomfile,
-    read_atomfile_structure,
     get_atom_indices,
     types,
     coords,
@@ -36,6 +34,10 @@ export
     num_atoms,
     timestep,
     box_dims,
+
+    read_atomfile,
+    read_atomfile_structure,
+
 
     # analysis.jl
     density,

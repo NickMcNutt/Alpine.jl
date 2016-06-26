@@ -125,7 +125,7 @@ box_dims(ad::AtomData) = length(ad.frames) == 1 ? box_dims(ad, 1) : box_dims(ad,
 #    File reading functions
 ################################
 
-function readbyte(chunk::Chunk)
+function read_byte(chunk::Chunk)
     b = chunk.data[chunk.i]
     chunk.i += 1
     return b
@@ -135,18 +135,18 @@ previewbyte(chunk::Chunk) = chunk.data[chunk.i]
 
 nextbyte(chunk::Chunk) = chunk.i += 1
 
-readnewline(chunk::Chunk) = while readbyte(chunk) != 0x0a end
+read_newline(chunk::Chunk) = while read_byte(chunk) != 0x0a end
 
-function readnewlines(chunk::Chunk, num_newlines::Int)
+function read_newlines(chunk::Chunk, num_newlines::Int)
     s = 0
     while s < num_newlines
-        if readbyte(chunk) == 0x0a
+        if read_byte(chunk) == 0x0a
             s += 1
         end
     end
 end
 
-function readfloat{T}(::Type{T}, chunk::Chunk)
+function read_float{T}(::Type{T}, chunk::Chunk)
     a = T(0)
     b = T(0)
     p = 1
@@ -179,11 +179,11 @@ function readfloat{T}(::Type{T}, chunk::Chunk)
     c != 0x45 && c != 0x65 && return (p*a/i)
     nextbyte(chunk)
     
-    b = readint(chunk)
+    b = read_int(chunk)
     return (p*a/i) * T(10)^b
 end
 
-function readint(chunk::Chunk)
+function read_int(chunk::Chunk)
     n = 0
     p = 1
     
@@ -203,7 +203,7 @@ function readint(chunk::Chunk)
     return p*n
 end
 
-function readsymbol(chunk::Chunk, atom_types::Matrix{UInt8}, i::Int)
+function read_symbol(chunk::Chunk, atom_types::Matrix{UInt8}, i::Int)
     n = size(atom_types, 1)
 
     j = 1
@@ -221,7 +221,7 @@ function readsymbol(chunk::Chunk, atom_types::Matrix{UInt8}, i::Int)
     end
 end
 
-function readsymbol(chunk::Chunk)
+function read_symbol(chunk::Chunk)
     i1 = chunk.i
     while true
         c = previewbyte(chunk)
@@ -232,7 +232,7 @@ function readsymbol(chunk::Chunk)
     end
 end
 
-function readnonblank(chunk::Chunk)
+function read_nonwhitespace(chunk::Chunk)
     while true
         c = previewbyte(chunk)
         (c == 0x20 || c == 0x09 || c == 0x0a) && return
@@ -240,80 +240,11 @@ function readnonblank(chunk::Chunk)
     end
 end
 
-function readblank(chunk::Chunk)
+function read_whitespace(chunk::Chunk)
     while true
         c = previewbyte(chunk)
         c != 0x20 && c != 0x09 && return
         nextbyte(chunk)
-    end
-end
-
-function readframeheader{T}(chunk::Chunk, ::Type{T})
-    frame_start = chunk.i
-    
-    readnewline(chunk)
-    
-    timestep = readint(chunk)
-    readnewlines(chunk, 2)
-    
-    num_atoms = readint(chunk)
-    readnewlines(chunk, 2)
-    
-    xl = readfloat(T, chunk)
-    readblank(chunk)
-    xh = readfloat(T, chunk)
-    readnewline(chunk)
-    
-    yl = readfloat(T, chunk)
-    readblank(chunk)
-    yh = readfloat(T, chunk)
-    readnewline(chunk)
-    
-    zl = readfloat(T, chunk)
-    readblank(chunk)
-    zh = readfloat(T, chunk)
-    readnewlines(chunk, 2)
-
-    atom_data_start = chunk.i
-    readnewlines(chunk, num_atoms)
-    frame_end = chunk.i - 1
-    
-    Frame(num_atoms, timestep, (xh - xl, yh - yl, zh - zl), frame_start, frame_end, atom_data_start)
-end
-
-function readlineatoms{T}(chunk::Chunk, atom_data::AtomData{T}, i::Int)
-    atom_type = readsymbol(chunk)
-    readnonblank(chunk)
-    readblank(chunk)
-    
-    x = readfloat(T, chunk)
-    readblank(chunk)
-    
-    y = readfloat(T, chunk)
-    readblank(chunk)
-    
-    z = readfloat(T, chunk)
-    readblank(chunk)
-    
-    charge = readfloat(T, chunk)
-    readblank(chunk)
-    
-    energy = readfloat(T, chunk)
-    readnewline(chunk)
-    
-    atom_data.types[i] = atom_type
-    atom_data.coords[1, i] = x
-    atom_data.coords[2, i] = y
-    atom_data.coords[3, i] = z
-    atom_data.charges[i] = charge
-    atom_data.energies[i] = energy
-end
-
-function readframeatoms{T}(chunk::Chunk, atom_data::AtomData{T}, frame_index::Int)
-    start_index = atom_data.indices[frame_index]
-    end_index = start_index + atom_data.frames[frame_index].num_atoms - 1
-    for i in start_index:end_index
-        readlineatoms(chunk, atom_data, i)
     end
 end
 
@@ -343,8 +274,8 @@ function read_atomfile{T}(filename::AbstractString, frames::Vector{Frame{T}})
     for (i, frame) in enumerate(frames)
         j = mod1(i, num_chunks)
         seek(ios, frame.atom_data_start - 1)
-        readbytes!(ios, chunks[j].data, frame_sizes[i], all = false)
-        readframeatoms(chunks[j], atom_data, i)
+        read_bytes!(ios, chunks[j].data, frame_sizes[i], all = false)
+        read_frame(chunks[j], atom_data, i)
     end
 
     close(ios)
@@ -359,11 +290,11 @@ function read_atomfile_structure(filename::AbstractString)
     frames = Vector{Frame{Float64}}()
 
     ios = open(filename, "r")
-    readbytes!(ios, chunk.data, file_size, all = false)
+    read_bytes!(ios, chunk.data, file_size, all = false)
     close(ios)
     
     while chunk.i < file_size
-        frame = readframeheader(chunk, Float64)
+        frame = read_frame_header(chunk, Float64)
         push!(frames, frame)
     end
 

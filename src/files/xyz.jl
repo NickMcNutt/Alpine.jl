@@ -57,3 +57,45 @@ function read_atoms{T}(::Type{T}, ::Type{XYZ}, chunk::Chunk, atom::Atoms, indice
         molecules[i] = molecule
     end
 end
+
+function write_atoms(::Type{XYZ}, io::IO, frame::Frame)
+    haskey(frame, :atoms) || throw(ArgumentError("Need frame atoms"))
+
+    atoms = frame[:atoms]
+    haskey(atoms, :type) || throw(ArgumentError("Need atom types"))
+    haskey(atoms, :coords) || throw(ArgumentError("Need atom coords"))
+
+    num_atoms = length(atoms)
+    println(io, num_atoms)
+
+    haskey(frame, :timestep) && print(io, "t = ", frame[:timestep], ' ')
+
+    if haskey(frame, :box_max)
+        xhi, yhi, zhi = frame[:box_max]
+        xlo, ylo, zlo = 0, 0, 0
+
+        if haskey(frame, :box_min)
+            xlo, ylo, zlo = frame[:box_min]
+        end
+
+        print(io, "box = ", xhi - xlo, ' ', yhi - ylo, ' ', zhi - zlo, ' ')
+    end
+
+    println(io)
+
+    has_extra = haskey(atoms, :molecule) || haskey(atoms, :energy)
+
+    for (i, atom) in enumerate(atoms)
+        print(io, atom[:type], ' ', atom[:coords][1], ' ', atom[:coords][2], ' ', atom[:coords][3])
+
+        haskey(atoms, :charge) && print(io, ' ', atom[:charge])
+
+        if has_extra
+            print(io, " #")
+            haskey(atoms, :molecule) && print(io, ' ', atom[:molecule])
+            haskey(atoms, :energy) && print(io, ' ', atom[:energy])
+        end
+
+        println(io)
+    end
+end

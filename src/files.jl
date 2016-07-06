@@ -207,6 +207,14 @@ end
 
 write_atoms{F <: AtomFileType}(file::AtomFile{F}, frame::Frame) = write_atoms(file, [frame])
 
+function read_atoms(file::AbstractString, end_frames::Int = 0)
+    file = AtomFile(file)
+    num_frames = length(read_frame_headers(file))
+    end_frames == 0 && (end_frames = num_frames)
+    frames = read_atoms(file, frames = num_frames-end_frames+1:num_frames)
+    end_frames == 1 ? frames[1] : frames
+end
+
 function read_atoms{F <: AtomFileType}(file::AtomFile{F}; frames::AbstractVector{Int} = eachindex(file.frame_headers))
     max_buffer_size = 1*1024*1024*1024
 

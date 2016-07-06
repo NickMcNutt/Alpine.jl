@@ -206,9 +206,11 @@ function write_atoms{F <: AtomFileType}(file::AtomFile{F}, frames::Vector{Frame}
 end
 
 write_atoms{F <: AtomFileType}(file::AtomFile{F}, frame::Frame) = write_atoms(file, [frame])
+write_atoms(filename::AbstractString, frames::Vector{Frame}) = write_atoms(AtomFile(filename), frames)
+write_atoms(filename::AbstractString, frame::Frame) = write_atoms(AtomFile(filename))
 
-function read_atoms(file::AbstractString, end_frames::Int = 0)
-    file = AtomFile(file)
+function read_atoms(filename::AbstractString, end_frames::Int = 0)
+    file = AtomFile(filename)
     num_frames = length(read_frame_headers(file))
     end_frames == 0 && (end_frames = num_frames)
     frames = read_atoms(file, frames = num_frames-end_frames+1:num_frames)

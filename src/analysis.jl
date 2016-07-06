@@ -38,16 +38,6 @@ function density{T<:AbstractFloat}(file_out::IO, C::AbstractMatrix{T}, n::Int, b
     println(file_out, "\n0" ^ remaining_zeros)
 end
 
-function get_atoms{N, T}(atoms::AtomData{T}, frame_index::Int, element_types::NTuple{N, Symbol})
-    atom_types = types(atoms, frame_index)
-    findin(atom_types, element_types)
-end
-
-function get_atoms{N}(frame::Int, types::NTuple{N, Symbol}, atom_types::Vector{Symbol}, num_atoms::Int)
-    indices = 1 + (frame - 1) * num_atoms : frame * num_atoms
-    findin(sub(atom_types, indices), types) .+ (first(indices) - 1)
-end
-
 function density2{T<:AbstractFloat}(file_out::IO, C::AbstractMatrix{T}, n::Int, bw::T = zero(Float64))
     num_atoms = size(C, 2)
 

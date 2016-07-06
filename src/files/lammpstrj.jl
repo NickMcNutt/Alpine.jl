@@ -121,17 +121,15 @@ function write_atoms(::Type{LAMMPSTRJ}, io::IO, frame::Frame)
     timestep = frame[:timestep]
 
     println(io,
-        """
-        ITEM: TIMESTEP
-        $timestep
-        ITEM: NUMBER OF ATOMS
-        $num_atoms
-        ITEM: BOX BOUNDS pp pp pp
-        $xlo $xhi
-        $ylo $yhi
-        $zlo $zhi
-        ITEM: ATOMS element mol xu yu zu q pe
-        """
+        "ITEM: TIMESTEP", '\n',
+        timestep, '\n',
+        "ITEM: NUMBER OF ATOMS", '\n',
+        num_atoms, '\n',
+        "ITEM: BOX BOUNDS pp pp pp", '\n',
+        xlo, ' ', xhi, '\n',
+        ylo, ' ', yhi, '\n',
+        zlo, ' ', zhi, '\n',
+        "ITEM: ATOMS element mol xu yu zu q pe"
     )
 
     for (i, atom) in enumerate(atoms)

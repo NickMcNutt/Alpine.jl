@@ -52,9 +52,9 @@ end
 function unwrapcoords!{T<:AbstractFloat}(bw::T, C::AbstractMatrix{T}, IC::AbstractMatrix{T})
     hbw = bw / 2
     @inbounds @simd for i in 1:size(C, 2)
-        if (C[1, i] - IC[1, i]) < hbw C[1, i] += bw elseif C[1, i] - IC[1, i] > hbw C[1, i] -= bw end
-        if (C[2, i] - IC[2, i]) < hbw C[2, i] += bw elseif C[2, i] - IC[2, i] > hbw C[2, i] -= bw end
-        if (C[3, i] - IC[3, i]) < hbw C[3, i] += bw elseif C[3, i] - IC[3, i] > hbw C[3, i] -= bw end
+        if (C[1, i] - IC[1, i]) < -hbw C[1, i] += bw elseif C[1, i] - IC[1, i] > hbw C[1, i] -= bw end
+        if (C[2, i] - IC[2, i]) < -hbw C[2, i] += bw elseif C[2, i] - IC[2, i] > hbw C[2, i] -= bw end
+        if (C[3, i] - IC[3, i]) < -hbw C[3, i] += bw elseif C[3, i] - IC[3, i] > hbw C[3, i] -= bw end
     end
 end
 

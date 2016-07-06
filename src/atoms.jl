@@ -1,4 +1,4 @@
-import Base: length, start, next, done, eachindex, get, getindex, setindex!, show, display, keys, haskey, merge, similar, hash, ==, isequal, endof
+import Base: length, start, next, done, eachindex, get, getindex, setindex!, show, display, keys, haskey, merge, similar, hash, ==, isequal, endof, merge
 
 # Types
 typealias FrameProps Dict{Symbol, Any}
@@ -78,7 +78,7 @@ function setindex!(atoms::Atoms, a::Vector, prop::Symbol)
     atoms.props[prop] = a
 end
 
-function combine(atoms::Atoms...)
+function merge(atoms::Atoms...)
     num_atoms = sum(length, atoms)
     prop_types = intersect(map(keys, atoms)...)
     props = Dict(

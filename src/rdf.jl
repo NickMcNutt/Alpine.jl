@@ -23,12 +23,31 @@ function ndf{T}(metric::Function, point_indices::Vector{Int}, radius::T, Δr::T)
     return bins
 end
 
-function rdf{T}(xbw::T, ybw::T, zbw::T, coords::Matrix{T}, radius::T, Δr::T)
+function ndf{T}(pair_count::Function, metric::Function, point_indices::Vector{Int}, radius::T, Δr::T)
+    num_points::Int = length(point_indices)
+    tree = VPTree(metric, point_indices)
+    neighbors = NeighborList{T}(num_points)
+
+    @inbounds for i in 1:num_points
+        rangesearch!(neighbors, tree, i, radius)
+
+        k = length(neighbors)
+        for j in 1:k
+            ni = neighbors.indices[j]
+            i == ni && continue
+            r::T = neighbors.distances[j]
+            b::Int = floor(Int, r / Δr) + 1
+            pair_count(b, i, ni)
+        end
+    end
+end
+
+function distance{T}(coords::Matrix{T}, xbw::T, ybw::T, zbw::T)
     xhbw = xbw / 2
     yhbw = ybw / 2
     zhbw = zbw / 2
 
-    function metric(i::Int, j::Int)
+    function(i::Int, j::Int)
         @inbounds x = coords[1, i] - coords[1, j]
         @inbounds y = coords[2, i] - coords[2, j]
         @inbounds z = coords[3, i] - coords[3, j]
@@ -39,11 +58,14 @@ function rdf{T}(xbw::T, ybw::T, zbw::T, coords::Matrix{T}, radius::T, Δr::T)
 
         return sqrt(x^2 + y^2 + z^2)
     end
+end
 
+function rdf{T}(atoms::Atoms, xbw::T, ybw::T, zbw::T, radius::T, Δr::T)
     num_bins::Int = ceil(Int, radius / Δr)
     bins = Matrix{T}(num_bins, 2)
 
-    num_atoms = size(coords, 2)
+    metric = distance(atoms[:coords], xbw, ybw, zbw)
+    num_atoms = length(atoms)
     point_indices = collect(1:num_atoms)
     int_bins = ndf(metric, point_indices, radius, Δr)
 
@@ -57,13 +79,48 @@ function rdf{T}(xbw::T, ybw::T, zbw::T, coords::Matrix{T}, radius::T, Δr::T)
     return bins
 end
 
-function rdf{N, T}(atoms::AtomData{T}, element_types::NTuple{N, Symbol}, max_radius::T, Δr::T)
-    num_frames = length(atoms.frames)
-    list = map(1:num_frames) do i
-        indices = get_atoms(atoms, i, element_types)
-        c = coords(atoms, i)[:, indices]
+function rdf{T}(f::Function, nf::Int, atoms::Atoms, xbw::T, ybw::T, zbw::T, radius::T, Δr::T)
+    num_bins::Int = ceil(Int, radius / Δr)
+    bins = Matrix{T}(nf, num_bins)
+    int_bins = zeros(UInt64, nf, num_bins)
 
-        (box_dims(atoms, i)..., c, max_radius, Δr)
+    metric = distance(atoms[:coords], xbw, ybw, zbw)
+    num_atoms = length(atoms)
+    point_indices = collect(1:num_atoms)
+    ndf((b, i, j) -> f(atoms, int_bins, b, i, j), metric, point_indices, radius, Δr)
+
+    for i in 1:num_bins
+        r_mid = i*Δr - Δr/2
+        divisor = (num_atoms * 4π * r_mid^2 * Δr) * (num_atoms / (xbw * ybw * zbw))
+        for g in 1:nf
+            bins[g, i] = int_bins[g, i] / divisor
+        end
+    end
+
+    return bins
+end
+
+@inline function rdf{T}(pair_count::Function, nf::Int, frame::Frame, radius::T, Δr::T)
+    rdf(pair_count, nf, frame[:atoms], box_dims(frame)..., radius, Δr)
+end
+
+function rdf{T}(pair_count::Function, nf::Int, frames::Vector{Frame}, radius::T, Δr::T)
+    mean(pmap(frames) do frame
+        rdf(pair_count, nf, frame[:atoms], box_dims(frame)..., radius, Δr)
+    end)
+end
+
+function rdf_axis{T}(radius::T, Δr::T)
+    num_bins = ceil(Int, radius / Δr)::Int
+    T[i*Δr - Δr/2 for i in 1:num_bins]
+end
+
+function rdf{N, T}(frames::Vector{Frame}, element_types::NTuple{N, Symbol}, max_radius::T, Δr::T)
+    list = map(frames) do frame
+        indices = findin(frame[:types], element_types)
+        c = frame[indices][:coords]
+
+        (box_dims(frame)..., c, max_radius, Δr)
     end
 
     mean(pmap(x -> rdf(x...), list))

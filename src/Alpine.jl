@@ -1,6 +1,6 @@
 module Alpine
 
-using Distances, VPTrees
+using VPTrees, CompressedIndices
 
 include("types.jl")
 
@@ -20,24 +20,28 @@ export
     distances!,
 
     # atoms.jl
+    Frame,
+    Atoms,
+    Atom,
+    add_property!,
+
+    # atoms_analysis.jl
     group,
-    coalesce,
+    box_dims,
+    unwrap!,
 
     # files.jl
-    Frame,
-    AtomData,
-    get_atom_indices,
-    types,
-    coords,
-    charges,
-    energies,
-    num_atoms,
-    timestep,
-    box_dims,
-
-    read_atomfile,
-    read_atomfile_structure,
-
+    AtomFileType,
+    AtomFile,
+    FrameHeader,
+    read_atoms,
+    read_frame_headers,
+    write_atoms,
+    LAMMPSTRJ,
+    TRJ,
+    LAMMPSDAT,
+    DAT,
+    XYZ,
 
     # analysis.jl
     density,
@@ -45,11 +49,18 @@ export
 
     # rdf.jl
     rdf_slow,
-    rdf
+    rdf,
+    rdf_axis
 
 include("distances.jl")
 include("atoms.jl")
+include("atoms_analysis.jl")
+
 include("files.jl")
+include("files/lammpstrj.jl")
+include("files/lammpsdat.jl")
+include("files/xyz.jl")
+
 include("analysis.jl")
 include("rdf.jl")
 

@@ -1,6 +1,6 @@
 import Base: length, size, sizeof, getindex
 
-typealias Indices Vector{Int}
+#typealias Indices Vector{Int}
 typealias AtomID Int
 
 type Container{T}

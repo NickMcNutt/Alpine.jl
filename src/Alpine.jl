@@ -37,10 +37,8 @@ export
     read_atoms,
     read_frame_headers,
     write_atoms,
-    LAMMPSTRJ,
-    TRJ,
-    LAMMPSDAT,
-    DAT,
+    LAMMPSTRJ, TRJ,
+    LAMMPSDAT, DAT,
     XYZ,
 
     # analysis.jl

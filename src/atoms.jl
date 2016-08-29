@@ -60,13 +60,13 @@ function getindex(atoms::Atoms, prop::Symbol)
     p = atoms.props[prop]
 
     if ndims(p) == 1
-        @inbounds v = sub(p, i)
+        @inbounds v = view(p, i)
         return v
     elseif ndims(p) == 2
-        @inbounds v = sub(p, :, i)
+        @inbounds v = view(p, :, i)
         return v
     elseif ndims(p) == 3
-        @inbounds v = sub(p, :, :, i)
+        @inbounds v = view(p, :, :, i)
     else
         return 0
     end

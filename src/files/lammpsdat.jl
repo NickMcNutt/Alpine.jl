@@ -152,7 +152,7 @@ function write_atoms(::Type{LAMMPSDAT}, io::IO, frame::Frame)
     num_atoms = length(atoms)
     unique_elements = sort!(unique(atoms[:type]))
     element_ids = Dict{Symbol, Int}(zip(unique_elements, eachindex(unique_elements)))
-    element_masses = Dict(:C => 12.0107, :N => 12.0107, :Li => 6.941, :H => 1.00794)
+    element_masses = Dict(:C => 12.0107, :Cl => 35.453, :H => 1.00794, :Li => 6.941, :N => 14.0067, :O => 15.9994, :P => 30.973762, :S => 32.065)
     xlo, ylo, zlo = frame[:box_min]
     xhi, yhi, zhi = frame[:box_max]
 

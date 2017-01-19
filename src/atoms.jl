@@ -81,12 +81,12 @@ end
 function merge(atoms::Atoms...)
     num_atoms = sum(length, atoms)
     prop_types = intersect(map(keys, atoms)...)
-    props = Dict([
+    props = Dict(
         prop => cat(
             ndims(first(atoms).props[prop]),
             map(a -> a[prop], atoms)...
         ) for prop in prop_types
-    ])
+    )
 
     Atoms(num_atoms, props)
 end

@@ -120,8 +120,8 @@ function setindex!{T}(atom::Atom, value::T, prop::Symbol)
     @inbounds atom.props[prop][atom.index] = value
 end
 
-hash(atom::Atom) = hash(object_id(atom.props)) $ hash(atom.index)
-hash(atom::Atom, h::UInt) = hash(atom) $ hash(h)
+hash(atom::Atom) = hash(object_id(atom.props)) ⊻ hash(atom.index)
+hash(atom::Atom, h::UInt) = hash(atom) ⊻ hash(h)
 ==(atom1::Atom, atom2::Atom) = hash(atom1) == hash(atom2)
 isequal(atom1::Atom, atom2::Atom) = atom1 == atom2
 

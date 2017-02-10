@@ -184,7 +184,8 @@ end
 function read_line(chunk::Chunk)
     i = chunk.i
     read_newline(chunk)
-    ascii(pointer(chunk.data, i), chunk.i - i - 1)
+    #ascii(pointer(chunk.data, i), chunk.i - i - 1)
+    String(chunk.data[i:chunk.i - 1])
 end
 
 function read_through_regex(chunk::Chunk, r::Regex)

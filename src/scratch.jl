@@ -44,11 +44,11 @@ function push!(neighbor_atoms::Cluster, atom_indices::AbstractVector{Int}, coord
     end
 end
 
-nonzeroNeighbors(num_all_neighbors::Dict{Symbol, Int}) = filter((k, v) -> v > 0, num_all_neighbors)
+#nonzeroNeighbors(num_all_neighbors::Dict{Symbol, Int}) = filter((k, v) -> v > 0, num_all_neighbors)
 
-function allocate_clusters(group::Group, neighbor_types::Dict{Symbol, Int})
+#==function allocate_clusters(group::Group, neighbor_types::Dict{Symbol, Int})
     Dict(Pair{Symbol, Dict{AtomID, Cluster}}[t => Dict(Pair{AtomID, Cluster}[id => Cluster(k) for id in group]) for (t, k) in neighbor_types])
-end
+end==#
 
 immutable Octree
     box_width::Float64

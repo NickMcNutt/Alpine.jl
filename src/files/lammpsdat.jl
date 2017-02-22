@@ -1,6 +1,6 @@
 type LAMMPSDAT <: AtomFileType end
 
-typealias DAT LAMMPSDAT
+DAT = LAMMPSDAT
 
 file_exts(::Type{LAMMPSDAT}) = (".dat",)
 

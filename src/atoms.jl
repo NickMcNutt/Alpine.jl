@@ -1,13 +1,13 @@
 import Base: length, start, next, done, eachindex, get, getindex, setindex!, show, display, keys, haskey, merge, similar, hash, ==, isequal, endof, merge
 
 # Types
-typealias FrameProps Dict{Symbol, Any}
+FrameProps = Dict{Symbol, Any}
 
 immutable Frame <: Associative{Symbol, Any}
     props::FrameProps
 end
 
-typealias AtomProps Dict{Symbol, Array}
+AtomProps = Dict{Symbol, Array}
 
 immutable Atoms <: Associative{Symbol, Array}
     indices::Indices

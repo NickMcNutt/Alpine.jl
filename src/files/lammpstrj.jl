@@ -1,6 +1,6 @@
 type LAMMPSTRJ <: AtomFileType end
 
-typealias TRJ LAMMPSTRJ
+TRJ = LAMMPSTRJ
 
 file_exts(::Type{LAMMPSTRJ}) = (".lammpstrj", ".trj")
 

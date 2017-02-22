@@ -48,6 +48,7 @@ export
     # elements.jl
     element_colors,
     element_radii,
+    element_masses,
     element_numbers,
 
     # graphs.jl

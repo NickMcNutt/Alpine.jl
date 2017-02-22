@@ -45,6 +45,18 @@ export
     density,
     get_atoms,
 
+    # elements.jl
+    element_colors,
+    element_radii,
+    element_numbers,
+
+    # graphs.jl
+    Graph,
+    vertices,
+    edges,
+    acyclic_paths,
+    unique_paths,
+
     # rdf.jl
     rdf_slow,
     rdf,
@@ -60,6 +72,8 @@ include("files/lammpsdat.jl")
 include("files/xyz.jl")
 
 include("analysis.jl")
+include("elements.jl")
+include("graphs.jl")
 include("rdf.jl")
 
 end

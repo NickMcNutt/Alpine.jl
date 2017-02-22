@@ -4,7 +4,7 @@ import Base: show, display, getindex, read
 #    Types
 ###########################
 
-abstract AtomFileType
+abstract type AtomFileType end
 
 immutable FrameHeader
     frame_start::Int64

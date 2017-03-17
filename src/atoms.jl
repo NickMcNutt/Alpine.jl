@@ -14,10 +14,15 @@ immutable Atoms <: Associative{Symbol, Array}
     props::AtomProps
 end
 
+length(atoms::Atoms) = length(atoms.indices)
+
 immutable Atom <: Associative{Symbol, Array}
     index::Int
     props::AtomProps
 end
+
+length(atom::Atom) = 1
+
 
 # Constructors
 Frame(props::Pair...) = Frame(FrameProps(props))
@@ -27,6 +32,15 @@ Atoms(num_atoms::Int, props::Pair...) = Atoms(num_atoms, AtomProps(props))
 Atoms{T <: AbstractVector{Int}}(indices::T, props::AtomProps) = Atoms(Indices(indices), props)
 Atoms(atoms1::Atoms, atoms2::Atoms) = Atoms(atoms1.indices, atoms2.props)
 Atom(atom1::Atom, atoms2::Atoms) = Atom(atom1.index, atoms2.props)
+function Atoms(atoms_list::Vector{Atom})
+    indices = Indices()
+    for item in atoms_list
+        push!(indices, item.index)
+    end
+
+    # Assumes that all atoms_list.props is same props structure.  Find fast way to check this for sure.
+    Atoms(indices, first(atoms_list).props)
+end
 
 # Frame accessors
 length(f::Frame) = length(f.props)
@@ -38,7 +52,6 @@ get(f::Frame, args...) = get(f.props, args...)
 setindex!(f::Frame, args...) = setindex!(f.props, args...)
 
 # Atoms accessors
-length(atoms::Atoms) = length(atoms.indices)
 keys(atoms::Atoms) = keys(atoms.props)
 haskey(atoms::Atoms, key) = haskey(atoms.props, key)
 start(atoms::Atoms) = start(atoms.indices)
@@ -97,8 +110,6 @@ function add_property!{T}(atoms::Atoms, prop::Symbol, default_value::T)
 end
 
 # Atom accessors
-length(atom::Atom) = 1
-
 function getindex(atom::Atom, prop::Symbol)
     i = atom.index
     p = atom.props[prop]

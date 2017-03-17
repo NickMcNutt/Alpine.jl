@@ -55,6 +55,7 @@ export
     Graph,
     vertices,
     edges,
+    acyclic_path_table,
     acyclic_paths,
     unique_paths,
 

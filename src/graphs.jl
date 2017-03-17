@@ -6,7 +6,7 @@ end
 vertices(G::Graph) = G.V
 edges(G::Graph) = G.E
 
-function acyclic_paths{T}(G::Graph{T}, max_path_length::Int = 20)
+function acyclic_path_table{T}(G::Graph{T}, max_path_length::Int = 20)
     paths = [Dict{Vector{T}, Vector{T}}()]
     
     for E in edges(G)
@@ -36,4 +36,6 @@ end
 
 reversal_invariant(v) = hash(v) ⊻ hash(reverse(v))
 
-unique_paths{T}(paths::Vector{Dict{Vector{T}, Vector{T}}}) = unique(reversal_invariant, vcat(collect.(keys.(paths[2:end]))...))
+unique_paths{T}(paths::Vector{Dict{Vector{T}, Vector{T}}}) = (p -> unique(reversal_invariant, p)).(collect.(keys.(paths)))
+
+acyclic_paths{T}(G::Graph{T}, max_path_length::Int = 20) = unique_paths(acyclic_path_table(G, max_path_length))

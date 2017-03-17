@@ -5,10 +5,6 @@ using VPTrees, CompressedIndices
 include("types.jl")
 
 export
-    # types.jl
-    Indices,
-    Clusters,
-
     # distances.jl
     sd,
     msd,

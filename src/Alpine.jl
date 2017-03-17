@@ -68,13 +68,13 @@ include("distances.jl")
 include("atoms.jl")
 include("atoms_analysis.jl")
 
-include("files.jl")
+include("files/files.jl")
 include("files/lammpstrj.jl")
 include("files/lammpsdat.jl")
 include("files/xyz.jl")
 
 include("analysis.jl")
-include("elements.jl")
+include("elements/elements.jl")
 include("graphs.jl")
 include("rdf.jl")
 

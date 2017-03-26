@@ -1,4 +1,4 @@
-abstract type Potential end
+abstract Potential
 
 type UFF <: Potential
 end

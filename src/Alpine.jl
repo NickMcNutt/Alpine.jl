@@ -2,8 +2,6 @@ module Alpine
 
 using VPTrees, CompressedIndices
 
-include("types.jl")
-
 export
     # distances.jl
     sd,
@@ -37,6 +35,17 @@ export
     LAMMPSDAT, DAT,
     XYZ,
 
+    # potentials.jl
+    vdw,
+    stretching,
+    bending,
+    torsion,
+    inversion,
+    atom_type_number,
+    atom_type_name,
+    atom_type_params,
+
+
     # analysis.jl
     density,
     get_atoms,
@@ -54,6 +63,10 @@ export
     acyclic_path_table,
     acyclic_paths,
     unique_paths,
+    generate_bonds,
+    unique_upto_reversal,
+    unique_neighborhoods,
+    neighborhood_type_ids,
 
     # rdf.jl
     rdf_slow,
@@ -68,6 +81,9 @@ include("files/files.jl")
 include("files/lammpstrj.jl")
 include("files/lammpsdat.jl")
 include("files/xyz.jl")
+
+include("potentials/potentials.jl")
+include("potentials/uff/uff.jl")
 
 include("analysis.jl")
 include("elements/elements.jl")

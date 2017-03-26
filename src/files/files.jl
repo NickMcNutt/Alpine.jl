@@ -26,7 +26,7 @@ immutable AtomFile{F <: AtomFileType}
     frame_headers::Vector{FrameHeader}
     frames::Vector{Frame}
 
-    AtomFile{F}(filename::AbstractString) = new(filename, Vector{FrameHeader}(), Vector{Frame}())
+    AtomFile(filename::AbstractString) = new(filename, Vector{FrameHeader}(), Vector{Frame}())
 end
 
 function AtomFile(filename::AbstractString)

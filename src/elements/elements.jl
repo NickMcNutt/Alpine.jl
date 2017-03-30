@@ -1,45 +1,17 @@
-using Colors
+using SQLite
 
 dir_elements = joinpath(Pkg.dir("Alpine"), "src/elements")
-filename_colors = joinpath(dir_elements, "element_colors.txt")
-filename_radii = joinpath(dir_elements, "element_radii.txt")
-filename_masses = joinpath(dir_elements, "element_masses.txt")
-filename_numbers = joinpath(dir_elements, "element_numbers.txt")
 
-function read_element_properties{T}(f::Function, result_type::Type{T}, filename::AbstractString)
-    data, header = readdlm(filename, '\t', AbstractString, header = true, comments = false)
+const db = SQLite.DB(joinpath(dir_elements, "elements.db"))
 
-    props = Dict(prop => data[:, i] for (i, prop) in enumerate(header))
-    elements = props["element"]
-    delete!(props, "element")
-
-    result = Dict{Symbol, Dict{Symbol, T}}()
-    for (i, el) in enumerate(elements)
-        element = Symbol(el)
-        result[element] = Dict{Symbol, T}()
-        for (key, val) in props
-            length(val[i]) > 0 || continue
-            result[element][Symbol(key)] = f(val[i])::T
-        end
-    end
-
-    return result
+function element_properties()
+    df = SQLite.columns(db, "elements")
+    keys = SQLite.columns(Alpine.db, "elements")[:name]
+    vals = SQLite.columns(Alpine.db, "elements")[:type]
+    Dict(zip(keys, vals))
 end
 
-const element_colors = read_element_properties(NTuple{3, Float64}, filename_colors) do color
-    h = "#" * color
-    c = parse(Colorant, h)
-    (Float64(c.r), Float64(c.g), Float64(c.b))
-end
-
-const element_radii = read_element_properties(Float64, filename_radii) do radius
-    parse(Float64, radius)
-end
-
-const element_masses = read_element_properties(Float64, filename_masses) do mass
-    parse(Float64, mass)
-end
-
-const element_numbers = atomic_numbers = read_element_properties(Int, filename_numbers) do number
-    parse(Int, number)
+function element_property(symbol::Symbol, property::Symbol)
+    df = SQLite.query(db, "SELECT * FROM elements WHERE symbol == ?;", values = [string(symbol)])
+    df[property][1]
 end

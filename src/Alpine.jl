@@ -24,6 +24,10 @@ export
     box_dims,
     unwrap!,
 
+    # elements.jl
+    element_property,
+    element_properties,
+
     # files.jl
     AtomFileType,
     AtomFile,
@@ -45,16 +49,9 @@ export
     atom_type_name,
     atom_type_params,
 
-
     # analysis.jl
     density,
     get_atoms,
-
-    # elements.jl
-    element_colors,
-    element_radii,
-    element_masses,
-    element_numbers,
 
     # graphs.jl
     Graph,
@@ -77,6 +74,8 @@ include("distances.jl")
 include("atoms.jl")
 include("atoms_analysis.jl")
 
+include("elements/elements.jl")
+
 include("files/files.jl")
 include("files/lammpstrj.jl")
 include("files/lammpsdat.jl")
@@ -86,7 +85,6 @@ include("potentials/potentials.jl")
 include("potentials/uff/uff.jl")
 
 include("analysis.jl")
-include("elements/elements.jl")
 include("graphs.jl")
 include("rdf.jl")
 

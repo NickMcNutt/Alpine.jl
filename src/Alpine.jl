@@ -1,7 +1,14 @@
 module Alpine
 
 try
-	Pkg.installed("VPTrees") && Pkg.installed("CompressedIndices")
+	Pkg.installed("VPTrees")
+
+	try
+		Pkg.installed("CompressedIndices")
+	catch
+		include("../deps/build.jl")
+	end
+
 catch
 	include("../deps/build.jl")
 end

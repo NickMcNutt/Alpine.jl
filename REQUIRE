@@ -1,5 +1,3 @@
 julia 0.5
-https://github.com/NickMcNutt/CompressedIndices.jl
-https://github.com/NickMcNutt/VPTrees.jl
 SQLite
 DataFrames

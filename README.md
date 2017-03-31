@@ -1,5 +1,4 @@
 # Alpine.jl
-=====
 
 [![Build Status](https://travis-ci.org/NickMcNutt/Alpine.jl.svg?branch=master)](https://travis-ci.org/NickMcNutt/Alpine.jl)
 [![Coverage Status](https://coveralls.io/repos/NickMcNutt/Alpine.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/NickMcNutt/Alpine.jl?branch=master)

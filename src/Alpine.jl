@@ -1,5 +1,11 @@
 module Alpine
 
+try
+	Pkg.installed("VPTrees") && Pkg.installed("CompressedIndices")
+catch
+	include("../deps/build.jl")
+end
+
 using VPTrees, CompressedIndices
 
 export

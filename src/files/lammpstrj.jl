@@ -5,7 +5,7 @@ TRJ = LAMMPSTRJ
 file_exts(::Type{LAMMPSTRJ}) = (".lammpstrj", ".trj")
 
 function Atoms(::Type{LAMMPSTRJ}, num_atoms::Int)
-	return if LAMMPSTRJ_VERSION == 0
+	return if 0 == 1 # VER
 		Atoms(num_atoms,
 			:type => Vector{Symbol}(num_atoms),
 			:molecule => Vector{Int}(num_atoms),
@@ -72,11 +72,11 @@ function read_frame_header{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk)
 end
 
 function read_atoms{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk, atoms::Atoms, indices::UnitRange{Int})
-	return if LAMMPSTRJ_VERSION == 0
-	    read_atoms0(T, LAMMPSTRJ, chunk, atoms, indices)
-	else
-	    read_atoms1(T, LAMMPSTRJ, chunk, atoms, indices)
-	end
+    return if 0 == 1 # VER
+        read_atoms0(T, LAMMPSTRJ, chunk, atoms, indices)
+    else
+        read_atoms1(T, LAMMPSTRJ, chunk, atoms, indices)
+    end
 end
 
 
@@ -120,13 +120,13 @@ function read_atoms0{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk, atoms::Atoms
 end
 
 function read_atoms1{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk, atoms::Atoms, indices::UnitRange{Int})
-	ids = atoms.props[:id]::Vector{Int}
+    ids = atoms.props[:id]::Vector{Int}
     types = atoms.props[:type]::Vector{Symbol}
     coords = atoms.props[:coords]::Matrix{T}
 
     for i in indices
-		atom_id = read_int(chunk)
-		read_whitespace(chunk)
+        atom_id = read_int(chunk)
+        read_whitespace(chunk)
 
         atom_type = read_symbol(chunk)
         read_whitespace(chunk)
@@ -140,7 +140,7 @@ function read_atoms1{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk, atoms::Atoms
         z = read_float(T, chunk)
         read_newline(chunk)
         
-		ids[i] = atom_id
+        ids[i] = atom_id
         types[i] = atom_type
         coords[1, i] = x
         coords[2, i] = y

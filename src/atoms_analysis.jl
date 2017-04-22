@@ -5,7 +5,7 @@ function group{T}(::Type{T}, atoms::Atoms, prop::Symbol)
         k = (atoms.props[prop]::Array{T})[i]
         
         if !haskey(props, k)
-            props[k] = Atoms(Indices(), atoms.props)
+            props[k] = Atoms(Int[], atoms.props)
         end
         
         push!(props[k].indices, i)

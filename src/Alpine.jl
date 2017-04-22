@@ -1,19 +1,6 @@
 module Alpine
 
-try
-	Pkg.installed("VPTrees")
-
-	try
-		Pkg.installed("CompressedIndices")
-	catch
-		include("../deps/build.jl")
-	end
-
-catch
-	include("../deps/build.jl")
-end
-
-using VPTrees, CompressedIndices
+using VPTrees
 
 export
     # distances.jl

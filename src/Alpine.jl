@@ -1,6 +1,6 @@
 module Alpine
 
-using VPTrees, CompressedIndices
+using VPTrees
 
 export
     # distances.jl

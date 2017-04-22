@@ -10,7 +10,7 @@ end
 AtomProps = Dict{Symbol, Array}
 
 immutable Atoms <: Associative{Symbol, Array}
-    indices::Indices
+    indices::Vector{Int}
     props::AtomProps
 end
 
@@ -27,13 +27,13 @@ length(atom::Atom) = 1
 # Constructors
 Frame(props::Pair...) = Frame(FrameProps(props))
 
-Atoms(num_atoms::Int, props::AtomProps) = Atoms(Indices(1:num_atoms), props)
+Atoms(num_atoms::Int, props::AtomProps) = Atoms(collect(1:num_atoms), props)
 Atoms(num_atoms::Int, props::Pair...) = Atoms(num_atoms, AtomProps(props))
-Atoms{T <: AbstractVector{Int}}(indices::T, props::AtomProps) = Atoms(Indices(indices), props)
+Atoms{T <: AbstractVector{Int}}(indices::T, props::AtomProps) = Atoms(collect(indices), props)
 Atoms(atoms1::Atoms, atoms2::Atoms) = Atoms(atoms1.indices, atoms2.props)
 Atom(atom1::Atom, atoms2::Atoms) = Atom(atom1.index, atoms2.props)
 function Atoms(atoms_list::Vector{Atom})
-    indices = Indices()
+    indices = Int[]
     for item in atoms_list
         push!(indices, item.index)
     end

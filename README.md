@@ -16,8 +16,6 @@ Alpine is a Julia library for analyzing and processing the results of molecular 
 
 * Key/value property system supports arbitrary properties defined on atoms and simulation boxes
 
-* Quickly perform *k* nearest neighbor and range searches within large simulation boxes using Vantage Point trees (which can handle periodic box boundaries)
-
 * Very fast computation of radial distribution functions (RDFs) with support for arbitrary binning functions
 
 * Ability to generate 3D density distributions from atom position data

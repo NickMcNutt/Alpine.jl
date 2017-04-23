@@ -1,7 +1,5 @@
 module Alpine
 
-using VPTrees
-
 export
     # distances.jl
     sd,

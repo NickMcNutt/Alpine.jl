@@ -4,7 +4,7 @@ import Base: show, display, getindex, read
 #    Types
 ###########################
 
-abstract AtomFileType
+abstract type AtomFileType end
 
 immutable FrameHeader
     frame_start::Int64
@@ -26,7 +26,7 @@ immutable AtomFile{F <: AtomFileType}
     frame_headers::Vector{FrameHeader}
     frames::Vector{Frame}
 
-    AtomFile(filename::AbstractString) = new(filename, Vector{FrameHeader}(), Vector{Frame}())
+    AtomFile{F}(filename::AbstractString) where F <: AtomFileType = new(filename, Vector{FrameHeader}(), Vector{Frame}())
 end
 
 function AtomFile(filename::AbstractString)

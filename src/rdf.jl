@@ -165,7 +165,7 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
     num_bins = ceil(Int, r_cutoff / Δr)
     
     bins_total = zeros(T, (num_bins, num_component_pairs))
-    bins = pmap(frames) do frame
+    for (i, frame) in enumerate(frames)
         bins = zeros(T, (num_bins, num_component_pairs))
         
         xbw, ybw, zbw = box_widths(frame)
@@ -184,10 +184,11 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
             bins[:, i] .= ndf_to_rdf(bins_ints, ρ, Δr)
         end
         
-        return bins
+        bins_total += bins
+
+        println(i)
+        flush(STDOUT)
     end
-    
-    bins_total = sum(bins)
     
     rdfs = Dict(join(component_pair, '-') => bins_total[:, i] for (i, component_pair) in enumerate(component_pairs))
     

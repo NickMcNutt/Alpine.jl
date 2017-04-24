@@ -101,7 +101,7 @@ function ndf!{T, U <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T,
     return bins
 end
 
-function genfunc_ndf{T}(frame::Alpine.Frame, r_cutoff::T, Δr::T, num_cells::Int)
+function func_ndf{T}(frame::Alpine.Frame, r_cutoff::T, Δr::T, num_cells::Int)
     r_cutoff_sq = r_cutoff^2
     
     coords = collect(frame[:atoms][:coords])::Matrix{T}
@@ -175,7 +175,7 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
         num_atoms = Dict(component => length(frame_components[component][:atoms])::Int for component in components)
         cells = Dict(component => sort_atoms_into_cells(frame_components[component], num_cells) for component in components)
         
-        ndf = genfunc_ndf(frame, r_cutoff, Δr, num_cells)
+        ndf = func_ndf(frame, r_cutoff, Δr, num_cells)
         
         for (i, component_pair) in enumerate(component_pairs)
             c1, c2 = component_pair[1], component_pair[2]

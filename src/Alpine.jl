@@ -20,8 +20,8 @@ export
     # atoms_analysis.jl
     group,
     box_dims,
-    unscale_and_wrap,
-    unscale_and_wrap!,
+    unscale,
+    unscale!,
     unwrap!,
 
     # elements.jl

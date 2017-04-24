@@ -73,6 +73,7 @@ export
     func_ndf,
     rdf_axis,
     split_by_types,
+    sort_atoms_into_cells,
     rdf_components,
     rdf_components_all
 

@@ -179,7 +179,7 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
             c1, c2 = component_pair[1], component_pair[2]
             bins_ints = ndf(cells[c1], cells[c2])
             ρ = (num_atoms[c1] * num_atoms[c2]) / volume
-            @inbounds bin[:, i] .+= ndf_to_rdf(bins_ints, ρ, Δr)
+            @inbounds bins[:, i] .+= ndf_to_rdf(bins_ints, ρ, Δr)
         end
     end
     

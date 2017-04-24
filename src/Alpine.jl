@@ -79,15 +79,15 @@ include("distances.jl")
 include("atoms.jl")
 include("atoms_analysis.jl")
 
-include("elements/elements.jl")
+#include("elements/elements.jl")
 
 include("files/files.jl")
 include("files/lammpstrj.jl")
 include("files/lammpsdat.jl")
 include("files/xyz.jl")
 
-include("potentials/potentials.jl")
-include("potentials/uff/uff.jl")
+#include("potentials/potentials.jl")
+#include("potentials/uff/uff.jl")
 
 include("analysis.jl")
 include("graphs.jl")

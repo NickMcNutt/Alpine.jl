@@ -171,8 +171,8 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
     components = sort(unique(vcat(component_pairs...)))
     num_bins = ceil(Int, r_cutoff / Δr)
     
-    bins_total = zeros(T, (num_bins, num_component_pairs))
-    for (f, frame) in enumerate(frames)
+    #bins_total = zeros(T, (num_bins, num_component_pairs))
+    bins_total = @parallel (+) for frame in frames
         bins = zeros(T, (num_bins, num_component_pairs))
         
         xbw, ybw, zbw = box_widths(frame)
@@ -191,10 +191,8 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
             bins[:, i] .= ndf_to_rdf(bins_ints, ρ, Δr)
         end
         
-        bins_total += bins
-
-        println(f)
-        flush(STDOUT)
+        #bins_total += bins
+        bins
     end
     
     rdfs = Dict(join(component_pair, '-') => bins_total[:, i] for (i, component_pair) in enumerate(component_pairs))

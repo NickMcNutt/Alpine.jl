@@ -21,7 +21,7 @@ end
 
 box_dims(f::Frame) = ntuple(i -> f[:box_max][i] - f[:box_min][i], 3)
 
-@inline function unscale_and_wrap{T}(bl::T, bu::T, bw::T, coord::T)
+@inline function unscale{T}(bl::T, bu::T, bw::T, coord::T)
     coord = bw * coord + bl
     
     if coord >= bu
@@ -33,14 +33,15 @@ box_dims(f::Frame) = ntuple(i -> f[:box_max][i] - f[:box_min][i], 3)
     return coord
 end
 
-function unscale_and_wrap!{T, U <: AbstractMatrix{T}}(bl::Vector{T}, bu::Vector{T}, bw::Vector{T}, coords::U)
+function unscale!{T, U <: AbstractMatrix{T}}(bl::Vector{T}, bu::Vector{T}, bw::Vector{T}, coords::U)
     ncols = size(coords, 2)
+
     for c in 1:ncols, r in 1:3
-        @inbounds coords[r, c] = unscale_and_wrap(bl[r], bu[r], bw[r], coords[r, c])
+        @inbounds coords[r, c] = unscale(bl[r], bu[r], bw[r], coords[r, c])
     end
 end
 
-unscale_and_wrap!(frame::Frame) = unscale_and_wrap!(box_lower(frame), box_upper(frame), box_widths(frame), frame[:atoms][:coords])
+unscale!(frame::Frame) = unscale!(box_lower(frame), box_upper(frame), box_widths(frame), frame[:atoms][:coords])
 
 function unwrap!{T}(atoms::Atoms, box_width::T, max_sep::T = 3.0)
     sep_sq = max_sep ^ 2

@@ -165,7 +165,8 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
     num_bins = ceil(Int, r_cutoff / Δr)
     
     bins_total = zeros(T, (num_bins, num_component_pairs))
-    for frame in frames
+
+    Threads.@threads for frame in frames
         bins = zeros(T, (num_bins, num_component_pairs))
         
         volume = prod(box_widths(frame))

@@ -81,13 +81,6 @@ function sort_atoms_into_cells(frame::Alpine.Frame, num_cells::Int)
         @inbounds iy = cell_index(ylo, ycw, coords[2, i])
         @inbounds iz = cell_index(zlo, zcw, coords[3, i])
 
-        # This is done becomes the atom files may report inaccurate bounding boxes
-        # in the frame headers.  Ultimately, all data should be validated during load
-        # time rather than during processing.
-        #ix = clamp(ix, 1, num_cells)
-        #iy = clamp(iy, 1, num_cells)
-        #iz = clamp(iy, 1, num_cells)
-        
         @inbounds push!(cells[ix, iy, iz], i)
     end
     

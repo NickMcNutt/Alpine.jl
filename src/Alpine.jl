@@ -66,6 +66,7 @@ export
     # rdf.jl
     box_upper,
     box_lower,
+    box_widths,
     ndf!,
     func_ndf,
     rdf_axis,

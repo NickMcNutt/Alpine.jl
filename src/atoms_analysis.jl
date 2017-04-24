@@ -39,9 +39,11 @@ function unscale!{T, U <: AbstractMatrix{T}}(bl::Vector{T}, bu::Vector{T}, bw::V
     for c in 1:ncols, r in 1:3
         @inbounds coords[r, c] = unscale(bl[r], bu[r], bw[r], coords[r, c])
     end
+
+    return coords
 end
 
-unscale!(frame::Frame) = unscale!(box_lower(frame), box_upper(frame), box_widths(frame), frame[:atoms][:coords])
+unscale!(frame::Frame) = (unscale!(box_lower(frame), box_upper(frame), box_widths(frame), frame[:atoms][:coords]) ; frame)
 
 function unwrap!{T}(atoms::Atoms, box_width::T, max_sep::T = 3.0)
     sep_sq = max_sep ^ 2

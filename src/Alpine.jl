@@ -75,7 +75,8 @@ export
     split_by_types,
     sort_atoms_into_cells,
     rdf_components,
-    rdf_components_all
+    rdf_components_all,
+    rdf_axis
 
 
 include("distances.jl")

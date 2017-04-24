@@ -149,6 +149,17 @@ function ndf_to_rdf{T}(bins_ints::Vector{UInt64}, ρ::T, Δr::T)
     return bins
 end
 
+function rdf_axis{T}(r_cutoff::T, Δr::T)
+    num_bins = ceil(Int, r_cutoff / Δr)
+    bins = zeros(T, num_bins)
+
+    for i in 1:num_bins
+        bins[i] = i*Δr - Δr/2
+    end
+
+    return bins
+end
+
 function split_by_types(frame::Alpine.Frame)
     types = group(frame[:atoms], :type)
     Dict(k => Alpine.Frame(

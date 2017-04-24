@@ -26,8 +26,10 @@ box_dims(f::Frame) = ntuple(i -> f[:box_max][i] - f[:box_min][i], 3)
     
     if coord >= bu
         coord -= bw
-    elseif coord < bl
-        coord += bw
+    end
+
+    if coord < bl
+        coord = clamp(coord, bl, bu)
     end
     
     return coord

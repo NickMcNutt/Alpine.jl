@@ -64,9 +64,15 @@ export
     neighborhood_type_ids,
 
     # rdf.jl
-    rdf_slow,
-    rdf,
-    rdf_axis
+    box_upper,
+    box_lower,
+    ndf!,
+    func_ndf,
+    rdf_axis,
+    split_by_types,
+    rdf_components,
+    rdf_components_all
+
 
 include("distances.jl")
 include("atoms.jl")

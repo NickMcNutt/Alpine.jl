@@ -179,6 +179,8 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
     
     bins = zeros(T, (num_bins, num_component_pairs))
 
+    num_threads = Threads.nthreads()
+
     Threads.@threads for frame in frames
         volume = prod(box_widths(frame))
         
@@ -196,7 +198,7 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
         end
     end
     
-    rdfs = Dict(join(component_pair, '-') => bins[:, i] for (i, component_pair) in enumerate(component_pairs))
+    rdfs = Dict(join(component_pair, '-') => bins[:, i] / num_threads for (i, component_pair) in enumerate(component_pairs))
     
     return rdfs
 end

@@ -1,6 +1,6 @@
-box_upper(frame::Alpine.Frame) = Float64[frame[:box_max]...]
-box_lower(frame::Alpine.Frame) = Float64[frame[:box_min]...]
-box_widths(frame::Alpine.Frame) = box_upper(frame) - box_lower(frame)
+box_upper(frame::Frame) = Float64[frame[:box_max]...]
+box_lower(frame::Frame) = Float64[frame[:box_min]...]
+box_widths(frame::Frame) = box_upper(frame) - box_lower(frame)
 
 function distance_sq{T}(xbw::T, ybw::T, zbw::T, coords::Matrix{T}, i1::Int, i2::Int)
     xhbw = xbw / 2
@@ -43,7 +43,7 @@ function distance_cells(box_width, cell1_center, cell1_width, cell2_center, cell
     return min(d1, d2, d3, d4), max(d1, d2, d3, d4)
 end
 
-function neighbor_cell_offsets{T}(frame::Alpine.Frame, r_cutoff::T, num_cells::Int)
+function neighbor_cell_offsets{T}(frame::Frame, r_cutoff::T, num_cells::Int)
     bw = box_widths(frame)
     cw = bw / num_cells
     
@@ -67,7 +67,7 @@ end
 
 cell_index{T}(xlo::T, xcw::T, x::T) = floor(Int, (x - xlo) / xcw)::Int + 1
 
-function sort_atoms_into_cells(frame::Alpine.Frame, num_cells::Int)
+function sort_atoms_into_cells(frame::Frame, num_cells::Int)
     atoms = frame[:atoms]
     num_atoms = length(atoms)::Int
     coords = atoms.props[:coords]::Matrix{Float64}
@@ -103,7 +103,7 @@ function ndf!{T, U <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T,
     return bins
 end
 
-function func_ndf{T}(frame::Alpine.Frame, r_cutoff::T, Δr::T, num_cells::Int)
+function func_ndf{T}(frame::Frame, r_cutoff::T, Δr::T, num_cells::Int)
     r_cutoff_sq = r_cutoff^2
     
     coords = frame[:atoms].props[:coords]::Matrix{T}
@@ -162,9 +162,9 @@ function rdf_axis{T}(r_cutoff::T, Δr::T)
     return bins
 end
 
-function split_by_types(frame::Alpine.Frame)
+function split_by_types(frame::Frame)
     types = group(frame[:atoms], :type)
-    Dict(k => Alpine.Frame(
+    Dict(k => Frame(
         :atoms => v,
         :timestep => frame[:timestep],
         :box_min => frame[:box_min],
@@ -172,7 +172,28 @@ function split_by_types(frame::Alpine.Frame)
     ) for (k, v) in types)
 end
 
-function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector{Vector{Symbol}}, r_cutoff::T, Δr::T, num_cells::Int)
+function rdf{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_cells::Int)
+	num_bins = ceil(Int, r_cutoff / Δr)
+	bins = zeros(T, num_bins)
+
+	num_threads = Threads.nthreads()
+
+	Threads.@threads for frame in frames
+		volume = prod(box_widths(frame))
+
+		num_atoms = length(frame[:atoms])::Int
+		cells = sort_atoms_into_cells(frame, num_cells)
+
+		ndf = func_ndf(frame, r_cutoff, Δr, num_cells)
+		bins_int = ndf(cells, cells)
+		ρ = num_atoms^2 / volume
+		bins .+= ndf_to_rdf(bins_int, ρ, Δr)
+
+		return bins / num_threads
+	end
+end
+
+function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector{Symbol}}, r_cutoff::T, Δr::T, num_cells::Int)
     num_component_pairs = length(component_pairs)
     components = sort(unique(vcat(component_pairs...)))
     num_bins = ceil(Int, r_cutoff / Δr)
@@ -203,7 +224,7 @@ function rdf_components{T}(frames::Vector{Alpine.Frame}, component_pairs::Vector
     return rdfs
 end
 
-function rdf_components_all{T}(frames::Vector{Alpine.Frame}, r_cutoff::T, Δr::T, num_cells::Int)
+function rdf_components_all{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_cells::Int)
     components = sort(unique(frames[1][:atoms][:type]))::Vector{Symbol}
     component_pairs = unique([sort([c1, c2]) for c1 in components, c2 in components])
     

@@ -176,6 +176,7 @@ function rdf{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_cells::Int)
 	num_bins = ceil(Int, r_cutoff / Δr)
 	bins = zeros(T, num_bins)
 
+	num_frames = length(frames)
 	num_threads = Threads.nthreads()
 
 	Threads.@threads for frame in frames
@@ -190,7 +191,7 @@ function rdf{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_cells::Int)
 		bins .+= ndf_to_rdf(bins_int, ρ, Δr)
 	end
 
-	return bins / num_threads
+	return bins / num_frames
 end
 
 function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector{Symbol}}, r_cutoff::T, Δr::T, num_cells::Int)
@@ -200,6 +201,7 @@ function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector
     
     bins = zeros(T, (num_bins, num_component_pairs))
 
+	num_frames = length(frames)
     num_threads = Threads.nthreads()
 
     Threads.@threads for frame in frames
@@ -219,7 +221,7 @@ function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector
         end
     end
     
-    rdfs = Dict(join(component_pair, '-') => bins[:, i] / num_threads for (i, component_pair) in enumerate(component_pairs))
+    rdfs = Dict(join(component_pair, '-') => bins[:, i] / num_frames for (i, component_pair) in enumerate(component_pairs))
     
     return rdfs
 end

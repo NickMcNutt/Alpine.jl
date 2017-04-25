@@ -68,8 +68,10 @@ end
 cell_index{T}(xlo::T, xcw::T, x::T) = floor(Int, (x - xlo) / xcw)::Int + 1
 
 function sort_atoms_into_cells(frame::Alpine.Frame, num_cells::Int)
-    num_atoms = length(frame[:atoms])::Int
-    coords = collect(frame[:atoms][:coords])::Matrix{Float64}
+    atoms = frame[:atoms]
+    num_atoms = length(atoms)::Int
+    coords = atoms.props[:coords]::Matrix{Float64}
+    indices = atoms.indices
     
     xlo::Float64, ylo::Float64, zlo::Float64 = box_lower(frame)
     xcw::Float64, ycw::Float64, zcw::Float64 = box_widths(frame) / num_cells
@@ -77,11 +79,11 @@ function sort_atoms_into_cells(frame::Alpine.Frame, num_cells::Int)
     cells = [Int[] for ix in 1:num_cells, iy in 1:num_cells, iz in 1:num_cells]
 
     for i in 1:num_atoms
-        @inbounds ix = cell_index(xlo, xcw, coords[1, i])
-        @inbounds iy = cell_index(ylo, ycw, coords[2, i])
-        @inbounds iz = cell_index(zlo, zcw, coords[3, i])
+        @inbounds ix = cell_index(xlo, xcw, coords[1, indices[i]])
+        @inbounds iy = cell_index(ylo, ycw, coords[2, indices[i]])
+        @inbounds iz = cell_index(zlo, zcw, coords[3, indices[i]])
 
-        @inbounds push!(cells[ix, iy, iz], i)
+        @inbounds push!(cells[ix, iy, iz], indices[i])
     end
     
     return cells
@@ -104,7 +106,7 @@ end
 function func_ndf{T}(frame::Alpine.Frame, r_cutoff::T, Δr::T, num_cells::Int)
     r_cutoff_sq = r_cutoff^2
     
-    coords = collect(frame[:atoms][:coords])::Matrix{T}
+    coords = frame[:atoms].props[:coords]::Matrix{T}
     xbw::T, ybw::T, zbw::T = box_widths(frame)
     
     num_bins = ceil(Int, r_cutoff / Δr)

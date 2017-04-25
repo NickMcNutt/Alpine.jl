@@ -91,7 +91,7 @@ end
 
 function ndf!{T, U <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T, zbw::T, coords::Matrix{T}, indices1::U, indices2::U, r_cutoff_sq::T, Δr::T)
     for i1 in indices1, i2 in indices2
-		if indices1 === indices2 && i1 > i2
+		if indices1 === indices2 && i1 >= i2
 			continue
 		end
 

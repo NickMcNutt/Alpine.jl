@@ -91,13 +91,16 @@ end
 
 function ndf!{T, U <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T, zbw::T, coords::Matrix{T}, indices1::U, indices2::U, r_cutoff_sq::T, Δr::T)
     for i1 in indices1, i2 in indices2
-        if i1 < i2
-			r_sq = distance_sq(xbw, ybw, zbw, coords, i1, i2)
-			if r_sq < r_cutoff_sq
-				r = sqrt(r_sq)
-				b = floor(Int, r / Δr) + 1
-				@inbounds bins[b] += 1
-			end
+		if indices1 === indices2 && i1 > i2
+			continue
+		end
+
+		r_sq = distance_sq(xbw, ybw, zbw, coords, i1, i2)
+
+		if r_sq < r_cutoff_sq
+			r = sqrt(r_sq)
+			b = floor(Int, r / Δr) + 1
+			@inbounds bins[b] += 1
 		end
     end
     

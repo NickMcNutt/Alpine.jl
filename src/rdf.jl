@@ -188,9 +188,9 @@ function rdf{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_cells::Int)
 		bins_int = ndf(cells, cells)
 		ρ = num_atoms^2 / volume
 		bins .+= ndf_to_rdf(bins_int, ρ, Δr)
-
-		return bins / num_threads
 	end
+
+	return bins / num_threads
 end
 
 function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector{Symbol}}, r_cutoff::T, Δr::T, num_cells::Int)

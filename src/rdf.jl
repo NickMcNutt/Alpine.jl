@@ -91,9 +91,9 @@ end
 
 function ndf!{T, A <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T, zbw::T, coords::Matrix{T}, indices1::A, indices2::A, r_cutoff_sq::T, Δr::T)
     for i1 in indices1, i2 in indices2
-		if indices1 === indices2 && i1 >= i2
-			continue
-		end
+		#if indices1 === indices2 && i1 >= i2
+			#continue
+		#end
 
 		r_sq = distance_sq(xbw, ybw, zbw, coords, i1, i2)
 
@@ -130,12 +130,12 @@ function func_ndf{T}(frame::Frame, r_cutoff::T, Δr::T, num_cells::Int)
 
                 i2 = sub2ind(dim_cells, i2x, i2y, i2z)
 
-                if i1 >= i2
+                #if i1 >= i2
                     @inbounds indices1 = cells1[i1x, i1y, i1z]
                     @inbounds indices2 = cells2[i2x, i2y, i2z]
 
                     ndf!(bins, xbw, ybw, zbw, coords, indices1, indices2, r_cutoff_sq, Δr)
-                end
+                #end
             end
         end
         

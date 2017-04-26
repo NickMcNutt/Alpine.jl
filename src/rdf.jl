@@ -211,6 +211,7 @@ function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector
     Threads.@threads for frame in frames
         volume = prod(box_widths(frame))
         
+		num_atoms_total = length(frame[:atoms])::Int
         frame_components = split_by_types(frame)
         num_atoms = Dict(component => length(frame_components[component][:atoms])::Int for component in components)
         cells = Dict(component => sort_atoms_into_cells(frame_components[component], num_cells) for component in components)
@@ -220,7 +221,8 @@ function rdf_components{T}(frames::Vector{Frame}, component_pairs::Vector{Vector
         for (i, component_pair) in enumerate(component_pairs)
             c1, c2 = component_pair[1], component_pair[2]
             bins_ints = ndf(cells[c1], cells[c2])
-            ρ = (num_atoms[c1] * num_atoms[c2]) / volume
+            #ρ = (num_atoms[c1] * num_atoms[c2]) / volume
+            ρ = num_atoms_total^2 / volume
             @inbounds bins[:, i] .+= ndf_to_rdf(bins_ints, ρ, Δr)
         end
     end

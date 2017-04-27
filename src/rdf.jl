@@ -242,3 +242,24 @@ function rdf_components_all{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_c
     
     return rdf_components(frames, component_pairs, r_cutoff, Δr, num_cells)
 end
+
+# Slow function used only for testing correctness of other functions
+function rdf_exact{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T)
+    frame = frames[1]
+    atoms = frame[:atoms]
+    coords = collect(atoms[:coords])::Matrix{T}
+
+    num_atoms = length(atoms)
+    xbw::T, ybw::T, zbw::T = box_widths(frame)
+    volume = prod((xbw, ybw, zbw))
+    ρ = num_atoms^2 / volume
+
+    num_bins = ceil(Int, r_cutoff / Δr)
+    bins_ints = zeros(UInt64, num_bins)
+    r_cutoff_sq = r_cutoff^2
+
+    Alpine.ndf!(bins_ints, xbw, ybw, zbw, coords, 1:num_atoms, 1:num_atoms, r_cutoff_sq, Δr)
+    bins = Alpine.ndf_to_rdf(bins_ints, ρ, Δr)
+
+    return bins
+end

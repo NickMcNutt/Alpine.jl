@@ -131,7 +131,7 @@ function func_ndf{T}(frame::Frame, r_cutoff::T, Δr::T, num_cells::Int)
 
                 i2 = sub2ind(dim_cells, i2x, i2y, i2z)
 
-                if cells1 === cells2 && i1 >= i2
+                if cells1 !== cells2 || i1 >= i2
                     @inbounds indices1 = cells1[i1x, i1y, i1z]
                     @inbounds indices2 = cells2[i2x, i2y, i2z]
 

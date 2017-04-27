@@ -91,7 +91,7 @@ end
 
 function ndf!{T, A <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T, zbw::T, coords::Matrix{T}, indices1::A, indices2::A, r_cutoff_sq::T, Δr::T)
     for i1 in indices1, i2 in indices2
-		#i1 >= i2 && continue
+		# If same cell and same component, iterate over each unique pair of atoms ONCE
 		if indices1 === indices2 && i1 >= i2
 			continue
 		end
@@ -101,7 +101,9 @@ function ndf!{T, A <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T,
 		if r_sq < r_cutoff_sq
 			r = sqrt(r_sq)
 			b = floor(Int, r / Δr) + 1
-			@inbounds bins[b] += 1
+			# Iterate over each unique atom pair once to save compute cycles,
+			# but count that pair twice (to produce correct density)
+			@inbounds bins[b] += 2
 		end
     end
     
@@ -131,6 +133,7 @@ function func_ndf{T}(frame::Frame, r_cutoff::T, Δr::T, num_cells::Int)
 
                 i2 = sub2ind(dim_cells, i2x, i2y, i2z)
 
+				# If same components, iterate over each unique pair of cells only ONCE
                 if cells1 !== cells2 || i1 >= i2
                     @inbounds indices1 = cells1[i1x, i1y, i1z]
                     @inbounds indices2 = cells2[i2x, i2y, i2z]

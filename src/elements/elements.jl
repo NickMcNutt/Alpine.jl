@@ -6,8 +6,8 @@ const db = SQLite.DB(joinpath(dir_elements, "elements.db"))
 
 function element_properties()
     df = SQLite.columns(db, "elements")
-    keys = SQLite.columns(Alpine.db, "elements")[:name]
-    vals = SQLite.columns(Alpine.db, "elements")[:type]
+    keys = SQLite.columns(db, "elements")[:name]
+    vals = SQLite.columns(db, "elements")[:type]
     Dict(zip(keys, vals))
 end
 

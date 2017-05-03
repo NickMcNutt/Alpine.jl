@@ -84,7 +84,7 @@ include("distances.jl")
 include("atoms.jl")
 include("atoms_analysis.jl")
 
-#include("elements/elements.jl")
+include("elements/elements.jl")
 
 include("files/files.jl")
 include("files/lammpstrj.jl")

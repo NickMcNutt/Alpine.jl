@@ -5,7 +5,7 @@ TRJ = LAMMPSTRJ
 file_exts(::Type{LAMMPSTRJ}) = (".lammpstrj", ".trj")
 
 function Atoms(::Type{LAMMPSTRJ}, num_atoms::Int)
-	return if 0 == 1 # VER
+	return if 0 == 0 # VER
 		Atoms(num_atoms,
 			:type => Vector{Symbol}(num_atoms),
 			:molecule => Vector{Int}(num_atoms),
@@ -72,7 +72,7 @@ function read_frame_header{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk)
 end
 
 function read_atoms{T}(::Type{T}, ::Type{LAMMPSTRJ}, chunk::Chunk, atoms::Atoms, indices::UnitRange{Int})
-    return if 0 == 1 # VER
+    return if 0 == 0 # VER
         read_atoms0(T, LAMMPSTRJ, chunk, atoms, indices)
     else
         read_atoms1(T, LAMMPSTRJ, chunk, atoms, indices)

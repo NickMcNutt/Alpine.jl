@@ -91,17 +91,19 @@ end
 
 function ndf!{T, A <: AbstractVector{Int}}(bins::Vector{UInt64}, xbw::T, ybw::T, zbw::T, coords::Matrix{T}, indices1::A, indices2::A, r_cutoff_sq::T, Δr::T)
     for i1 in indices1, i2 in indices2
-		i1 >= i2 && continue
-		#if indices1 === indices2 && i1 >= i2
-			#continue
-		#end
+		# If same cell and same component, iterate over each unique pair of atoms ONCE
+		if indices1 === indices2 && i1 >= i2
+			continue
+		end
 
 		r_sq = distance_sq(xbw, ybw, zbw, coords, i1, i2)
 
 		if r_sq < r_cutoff_sq
 			r = sqrt(r_sq)
 			b = floor(Int, r / Δr) + 1
-			@inbounds bins[b] += 1
+			# Iterate over each unique atom pair once to save compute cycles,
+			# but count that pair twice (to produce correct density)
+			@inbounds bins[b] += 2
 		end
     end
     
@@ -131,12 +133,13 @@ function func_ndf{T}(frame::Frame, r_cutoff::T, Δr::T, num_cells::Int)
 
                 i2 = sub2ind(dim_cells, i2x, i2y, i2z)
 
-                #if i1 >= i2
+				# If same components, iterate over each unique pair of cells only ONCE
+                if cells1 !== cells2 || i1 >= i2
                     @inbounds indices1 = cells1[i1x, i1y, i1z]
                     @inbounds indices2 = cells2[i2x, i2y, i2z]
 
                     ndf!(bins, xbw, ybw, zbw, coords, indices1, indices2, r_cutoff_sq, Δr)
-                #end
+                end
             end
         end
         
@@ -238,4 +241,25 @@ function rdf_components_all{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T, num_c
     component_pairs = unique([sort([c1, c2]) for c1 in components, c2 in components])
     
     return rdf_components(frames, component_pairs, r_cutoff, Δr, num_cells)
+end
+
+# Slow function used only for testing correctness of other functions
+function rdf_exact{T}(frames::Vector{Frame}, r_cutoff::T, Δr::T)
+    frame = frames[1]
+    atoms = frame[:atoms]
+    coords = collect(atoms[:coords])::Matrix{T}
+
+    num_atoms = length(atoms)
+    xbw::T, ybw::T, zbw::T = box_widths(frame)
+    volume = prod((xbw, ybw, zbw))
+    ρ = num_atoms^2 / volume
+
+    num_bins = ceil(Int, r_cutoff / Δr)
+    bins_ints = zeros(UInt64, num_bins)
+    r_cutoff_sq = r_cutoff^2
+
+    Alpine.ndf!(bins_ints, xbw, ybw, zbw, coords, 1:num_atoms, 1:num_atoms, r_cutoff_sq, Δr)
+    bins = Alpine.ndf_to_rdf(bins_ints, ρ, Δr)
+
+    return bins
 end
